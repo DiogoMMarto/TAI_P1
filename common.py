@@ -31,7 +31,7 @@ def prob(text:str, k: int, table: dict[str,int])-> float:
 
 def gen_yield(prior: str, k: int, alphabet: set[str], table: dict[str,int], size: int):
     text = prior
-    # TODO: ON BAD CASES USE MAYBE LIKE LEVANSTEIN DISTANCE
+    # TODO: ON BAD CASES USE MAYBE LIKE levenstein DISTANCE (https://en.wikipedia.org/wiki/Levenshtein_distance)
     for _ in range(size):
         context = text[-k:]
         if len(context) >= k:
