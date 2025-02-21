@@ -12,11 +12,11 @@ def estimate_prob(text: str,ko: int, alpha: float, alphabet: set[str])-> dict[st
     for i in range(len(text) - ko):
         context = text[i:i+ko]
         next_char = text[i+ko]
-        table[(context,next_char)] = table.setdefault((context,next_char),0) + 1
+        table[(context,next_char)] = table.get((context,next_char),0) + 1
         
     const = alpha * len(alphabet)
     for k,v in table.items():
-        sums[k[0]] = sums.setdefault(k[0],const) + v
+        sums[k[0]] = sums.get(k[0], const) + v
         
     sum_ = 0
     for k,v in table.items():
