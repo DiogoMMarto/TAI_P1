@@ -1,3 +1,4 @@
+Should be ran using Java 17 or above.
 Arguments should be passed in order:
 alpha(double) k(int) file_path(or name) verbose(boolean) 
 
