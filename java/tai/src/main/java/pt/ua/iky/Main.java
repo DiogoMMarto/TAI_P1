@@ -2,18 +2,15 @@ package pt.ua.iky;
 
 import java.util.logging.Logger;
 
-public class Main {
+public final class Main {
 
   private static final Logger log = Logger.getLogger(Main.class.getName());
 
   public static void main(String[] args) {
     System.setProperty("java.util.logging.SimpleFormatter.format",
         "Time: %1$tT.%1$tL -> %4$s %5$s%6$s%n");
+    log.info("a: " + args[0] + ", k: " + args[1] + ", file: " + args[2]);
 
-    log.info("a: " + args[0]);
-    log.info("k: " + args[1]);
-    log.info("file: " + args[2]);
-    
     boolean verbose = false;
     if (args.length > 3) {
       log.info("verbose?: " + args[3]);
