@@ -1,11 +1,18 @@
-# HOW TO RUN 
+# TAI Project 1
+Teoria algoritimica da informação - Universidade de Aveiro 2025
 
-FCM:
-```
-$ py .\fcm.py .\sequences\sequence2.txt -k 50 -a 0.1 
-```
+## Structure
+Each folder contains an implemention of the project in their respective language aswell as instructions on how to run each program.
 
-Generator:
-```
-$ py .\generator.py .\sequences\sequence5.txt -k 50 -a 0.01 -p "void quickSort(int arr[], int lower, int upper)" -s 1000
-```
+## Table of features
+
+| Language | FCM | Generator |
+| -------- | --- | --------- |
+| c        | ✅ | ❌        |
+| cpp      | ✅ | ❌        |
+| rus      | ✅ | ❌        |
+| python   | ✅ | ✅        |
+
+
+## Authors
+Diogo Machado Marto NºMec
