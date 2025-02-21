@@ -9,7 +9,7 @@ import java.util.Set;
 
 public class FCM {
 
-  public double runFcm(double alpha, int k, String fileName) {
+  public double runFcm(double alpha, int k, String fileName, boolean verbose) {
     String content = readFile(fileName);
     if (content == null) {
       return 0d;
@@ -54,9 +54,12 @@ public class FCM {
     // Average (per prediction) negative log probability converted into bits.
     double entropy = -sumLogProb / totalPredictions / Math.log(2);
 
-    for (Map.Entry<String, Map<Character, Integer>> entry : contextCounts.entrySet()) {
-      System.out.println("Ctx: " + entry.getKey() + " -> " + entry.getValue());
+    if (verbose) {
+      for (Map.Entry<String, Map<Character, Integer>> entry : contextCounts.entrySet()) {
+        System.out.println("Ctx: " + entry.getKey() + " -> " + entry.getValue());
+      }
     }
+
     System.out.println("Entropy: " + entropy + " bps");
     return entropy;
   }
