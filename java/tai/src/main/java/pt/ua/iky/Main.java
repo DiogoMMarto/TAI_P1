@@ -16,9 +16,9 @@ public final class Main {
       log.info("verbose?: " + args[3]);
       verbose = Boolean.parseBoolean(args[3]);
     }
-    double alpha = Double.parseDouble(args[0]);
-    int k = Integer.parseInt(args[1]);
-    String fileName = args[2];
+    final float alpha = Float.parseFloat(args[0]);
+    final int k = Integer.parseInt(args[1]);
+    final String fileName = args[2];
 
     FCM fcm = new FCM();
     fcm.runFcm(alpha, k, fileName, verbose);

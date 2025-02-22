@@ -14,10 +14,10 @@ public final class FCM {
 
   private final Logger log = Logger.getLogger(getClass().getName());
 
-  public double runFcm(double alpha, int k, String fileName, boolean verbose) {
+  public float runFcm(float alpha, int k, String fileName, boolean verbose) {
     final String content = readFile(fileName);
     if (content == null || content.isEmpty()) {
-      return 0d;
+      return 0F;
     }
     final Set<Character> alphabet = new LinkedHashSet<>();
     for (final char c : content.toCharArray()) {
@@ -37,28 +37,27 @@ public final class FCM {
 
     // Compute the weighted sum of log probabilities for each (context, nextChar) pair:
     // count * log((count + alpha)/(totalCount_for_context + alpha*alphabet.size()))
-    double sumLogProb = 0.0;
+    float sumLogProb = 0.0F;
     final int totalPredictions = content.length() - k;  // total number of predictions made
-
+    final float alphaTimesAlphabet = alpha * alphabet.size();
     for (Map.Entry<String, Map<Character, Integer>> entry : contextCounts.entrySet()) {
       Map<Character, Integer> counts = entry.getValue();
       // Sum of counts of the context
       final int contextTotalCount = counts.values().stream().mapToInt(Integer::intValue).sum();
       // Denominator: observed count plus smoothing mass for every character
-      final double denominator = contextTotalCount + alpha * alphabet.size();
+      final float denominator = contextTotalCount + alphaTimesAlphabet;
       // Iterate over the entire alphabet; if a character was not observed, its count is 0.
       for (char c : alphabet) {
-        final int count = counts.getOrDefault(c, 0);
-        // Only add if count is > 0
-        if (count != 0) {
-          final double probability = (count + alpha) / denominator;
-          sumLogProb += count * Math.log(probability);
+        final Integer count = counts.get(c);
+        if (count != null) {
+          final float probability = (count + alpha) / denominator;
+          sumLogProb += count * (float) Math.log(probability);
         }
       }
     }
 
     // Average (per prediction) negative log probability converted into bits.
-    final double entropy = -sumLogProb / totalPredictions / Math.log(2);
+    final float entropy = (-sumLogProb / totalPredictions / (float) Math.log(2));
 
     if (verbose) {
       for (Map.Entry<String, Map<Character, Integer>> entry : contextCounts.entrySet()) {
