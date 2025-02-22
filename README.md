@@ -16,5 +16,5 @@ Each folder contains an implemention of the project in their respective language
 
 
 ## Authors
-Diogo Machado Marto NºMec
-Ilker Atik 123947
+- Diogo Machado Marto NºMec
+- Ilker Atik 123947
