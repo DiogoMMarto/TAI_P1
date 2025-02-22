@@ -4,6 +4,7 @@ import static java.util.logging.Level.INFO;
 import static pt.ua.iky.Common.readFile;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -23,10 +24,10 @@ public final class FCM {
       alphabet.add(c);
     }
 
-    final Map<String, Map<Character, Integer>> contextCounts = new HashMap<>(); //"CONTEXT" -> {"A": 1, "B":2}
+    final Map<String, Map<Character, Integer>> contextCounts = new LinkedHashMap<>(); //"CONTEXT" -> {"A": 1, "B":2}
     for (int i = 0; i + k < content.length(); i++) {
       final String context = content.substring(i, i + k);
-      final Character nextChar = content.charAt(i + k);
+      final char nextChar = content.charAt(i + k);
       // Initialize maps if necessary
       contextCounts.putIfAbsent(context, new HashMap<>());
       Map<Character, Integer> charCounts = contextCounts.get(context);
@@ -45,7 +46,6 @@ public final class FCM {
       final int contextTotalCount = counts.values().stream().mapToInt(Integer::intValue).sum();
       // Denominator: observed count plus smoothing mass for every character
       final double denominator = contextTotalCount + alpha * alphabet.size();
-
       // Iterate over the entire alphabet; if a character was not observed, its count is 0.
       for (char c : alphabet) {
         final int count = counts.getOrDefault(c, 0);
