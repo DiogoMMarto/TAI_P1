@@ -11,7 +11,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.logging.Logger;
 
-public class Common {
+public final class Common {
 
   private static final Logger log = Logger.getLogger(Common.class.getName());
 
