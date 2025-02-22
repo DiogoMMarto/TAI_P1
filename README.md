@@ -1,8 +1,8 @@
 # TAI Project 1
-Teoria algoritimica da informação - Universidade de Aveiro 2025
+Teoria algorítmica da informação - Universidade de Aveiro 2025
 
 ## Structure
-Each folder contains an implemention of the project in their respective language aswell as instructions on how to run each program.
+Each folder contains an implemention of the project in their respective language as well as instructions on how to run each program.
 
 ## Table of features
 
@@ -10,9 +10,11 @@ Each folder contains an implemention of the project in their respective language
 | -------- | --- | --------- |
 | c        | ✅ | ❌        |
 | cpp      | ✅ | ❌        |
-| rus      | ✅ | ❌        |
+| rust     | ✅ | ❌        |
 | python   | ✅ | ✅        |
+| java     | ✅ | ❌        |
 
 
 ## Authors
-Diogo Machado Marto NºMec
+- Diogo Machado Marto NºMec
+- Ilker Atik 123947
