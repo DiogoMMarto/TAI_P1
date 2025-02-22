@@ -14,39 +14,78 @@ public final class FCM {
 
   private final Logger log = Logger.getLogger(getClass().getName());
 
-  public float runFcm(float alpha, int k, String fileName, boolean verbose) {
+  public float run(float alpha, int k, String fileName, boolean verbose) {
     final String content = readFile(fileName);
     if (content == null || content.isEmpty()) {
       return 0F;
     }
-    final Set<Character> alphabet = new LinkedHashSet<>();
-    for (final char c : content.toCharArray()) {
-      alphabet.add(c);
-    }
+    final Set<Character> alphabet = getAlphabetSet(content);
+    final Map<String, Map<Character, Integer>> contextCounts = getContextCharacterCounts(k,
+        content);
+    final int totalNoOfPredictions = content.length() - k;
+    float sumLogProb = calculateWeightedLogSum(alpha, alphabet, contextCounts);
+    // Average (per prediction) negative log probability converted into bits
+    final float entropy = -sumLogProb / totalNoOfPredictions / (float) Math.log(2);
+    log.log(INFO, "Entropy: {0} bps", entropy);
 
-    final Map<String, Map<Character, Integer>> contextCounts = new LinkedHashMap<>(); //"CONTEXT" -> {"A": 1, "B":2}
+    if (verbose) {
+      for (Map.Entry<String, Map<Character, Integer>> entry : contextCounts.entrySet()) {
+        log.info("Ctx: " + entry.getKey() + " -> " + entry.getValue());
+      }
+    }
+    return entropy;
+  }
+
+  /**
+   * Creates the map in the format of "CONTEXT" -> {"A": 1, "B":2}
+   *
+   * @param k       context width
+   * @param content full text
+   * @return map of "CONTEXT" -> {"A": 1, "B":2}
+   */
+  private Map<String, Map<Character, Integer>> getContextCharacterCounts(int k,
+      String content) {
+    final Map<String, Map<Character, Integer>> contextCounts = new LinkedHashMap<>();
     for (int i = 0; i + k < content.length(); i++) {
       final String context = content.substring(i, i + k);
       final char nextChar = content.charAt(i + k);
-      // Initialize maps if necessary
+      // Initialize map if necessary
       contextCounts.putIfAbsent(context, new HashMap<>());
       Map<Character, Integer> charCounts = contextCounts.get(context);
       // Increment count for this character
       charCounts.merge(nextChar, 1, Integer::sum);
     }
+    return contextCounts;
+  }
 
-    // Compute the weighted sum of log probabilities for each (context, nextChar) pair:
-    // count * log((count + alpha)/(totalCount_for_context + alpha*alphabet.size()))
+  /**
+   * Creates an alphabet from the symbols used in the content
+   *
+   * @param content full text
+   * @return set of symbols
+   */
+  private Set<Character> getAlphabetSet(String content) {
+    final Set<Character> alphabet = new LinkedHashSet<>();
+    for (final char c : content.toCharArray()) {
+      alphabet.add(c);
+    }
+    return alphabet;
+  }
+
+  /**
+   * Compute the weighted sum of log probabilities for each (context, nextChar) pair: count *
+   * log((count + alpha) / (totalCount_for_context + alpha*alphabet.size()))
+   */
+  private float calculateWeightedLogSum(float alpha, Set<Character> alphabet,
+      Map<String, Map<Character, Integer>> contextCounts) {
     float sumLogProb = 0.0F;
-    final int totalPredictions = content.length() - k;  // total number of predictions made
     final float alphaTimesAlphabet = alpha * alphabet.size();
     for (Map.Entry<String, Map<Character, Integer>> entry : contextCounts.entrySet()) {
       Map<Character, Integer> counts = entry.getValue();
-      // Sum of counts of the context
+      // Sum of counts for the context
       final int contextTotalCount = counts.values().stream().mapToInt(Integer::intValue).sum();
       // Denominator: observed count plus smoothing mass for every character
       final float denominator = contextTotalCount + alphaTimesAlphabet;
-      // Iterate over the entire alphabet; if a character was not observed, its count is 0.
       for (char c : alphabet) {
         final Integer count = counts.get(c);
         if (count != null) {
@@ -55,17 +94,7 @@ public final class FCM {
         }
       }
     }
-
-    // Average (per prediction) negative log probability converted into bits.
-    final float entropy = (-sumLogProb / totalPredictions / (float) Math.log(2));
-
-    if (verbose) {
-      for (Map.Entry<String, Map<Character, Integer>> entry : contextCounts.entrySet()) {
-        log.info("Ctx: " + entry.getKey() + " -> " + entry.getValue());
-      }
-    }
-
-    log.log(INFO, "Entropy: {0} bps", entropy);
-    return entropy;
+    return sumLogProb;
   }
+
 }

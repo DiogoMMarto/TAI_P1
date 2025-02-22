@@ -21,6 +21,6 @@ public final class Main {
     final String fileName = args[2];
 
     FCM fcm = new FCM();
-    fcm.runFcm(alpha, k, fileName, verbose);
+    fcm.run(alpha, k, fileName, verbose);
   }
 }
