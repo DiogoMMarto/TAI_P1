@@ -19,46 +19,56 @@ public final class Common {
   }
 
   public static String readFile(String fileName) {
+    InputStream resourceFileInputStream = getInputStreamOfResourceFile(fileName);
+    if (resourceFileInputStream == null) {
+      return readExternalFile(fileName);
+    }
+    return readFromInputStream(resourceFileInputStream);
+  }
+
+  private static InputStream getInputStreamOfResourceFile(String fileName) {
     ClassLoader classLoader = Common.class.getClassLoader();
-    InputStream inputStream = classLoader.getResourceAsStream(fileName);
-    if (inputStream == null) {
+    return classLoader.getResourceAsStream(fileName);
+  }
+
+  private static String readExternalFile(String fileName) {
+    try {
       log.log(WARNING, "file not found under resources, now trying exact path: {0}", fileName);
-      try {
-        FileReader reader = new FileReader(fileName);
-        return readFromInputStream(reader);
-      } catch (FileNotFoundException e) {
-        log.log(SEVERE, "file not found: {0}", fileName);
-      }
+      FileReader reader = new FileReader(fileName);
+      return readFromFileReader(reader);
+    } catch (FileNotFoundException e) {
+      log.log(SEVERE, "file not found: {0}", fileName);
       return null;
     }
-    return readFromInputStream(inputStream);
   }
 
   private static String readFromInputStream(InputStream inputStream) {
     StringBuilder resultStringBuilder = new StringBuilder();
     try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))) {
-      String line;
-      while ((line = br.readLine()) != null) {
-        resultStringBuilder.append(line).append("\n");
-      }
+      readFromBufferedReader(br, resultStringBuilder);
     } catch (IOException e) {
-      log.log(SEVERE, "error while reading the file content", e);
+      log.log(SEVERE, "error while reading the file content using input stream", e);
       return null;
     }
     return resultStringBuilder.toString();
   }
 
-  private static String readFromInputStream(FileReader fileReader) {
+  private static String readFromFileReader(FileReader fileReader) {
     StringBuilder resultStringBuilder = new StringBuilder();
     try (BufferedReader br = new BufferedReader(fileReader)) {
-      String line;
-      while ((line = br.readLine()) != null) {
-        resultStringBuilder.append(line).append("\n");
-      }
+      readFromBufferedReader(br, resultStringBuilder);
     } catch (IOException e) {
-      log.log(WARNING, "error while reading the file content", e);
+      log.log(WARNING, "error while reading the file content using file reader", e);
       return null;
     }
     return resultStringBuilder.toString();
+  }
+
+  private static void readFromBufferedReader(BufferedReader br, StringBuilder resultStringBuilder)
+      throws IOException {
+    String line;
+    while ((line = br.readLine()) != null) {
+      resultStringBuilder.append(line).append("\n");
+    }
   }
 }

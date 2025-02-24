@@ -20,7 +20,8 @@ public final class FCM {
       return 0F;
     }
     final Set<Character> alphabet = getAlphabetSet(content);
-    final Map<String, Map<Character, Integer>> contextCounts = getContextCharacterCounts(k,
+    final Map<String, Map<Character, Integer>> contextCounts = getContextAndSucceedingCharacterCounts(
+        k,
         content);
     final int totalNoOfPredictions = content.length() - k;
     float sumLogProb = calculateWeightedLogSum(alpha, alphabet, contextCounts);
@@ -37,13 +38,13 @@ public final class FCM {
   }
 
   /**
-   * Creates the map in the format of "CONTEXT" -> {"A": 1, "B":2}
+   * Creates the context and succeeding character and count Map
    *
    * @param k       context width
    * @param content full text
-   * @return map of "CONTEXT" -> {"A": 1, "B":2}
+   * @return Map in the format of "CONTEXT" -> {"A": 1, "B":2}
    */
-  private Map<String, Map<Character, Integer>> getContextCharacterCounts(int k,
+  private Map<String, Map<Character, Integer>> getContextAndSucceedingCharacterCounts(int k,
       String content) {
     final Map<String, Map<Character, Integer>> contextCounts = new LinkedHashMap<>();
     for (int i = 0; i + k < content.length(); i++) {
@@ -62,12 +63,12 @@ public final class FCM {
    * Creates an alphabet from the symbols used in the content
    *
    * @param content full text
-   * @return set of symbols
+   * @return Set of symbols
    */
   private Set<Character> getAlphabetSet(String content) {
     final Set<Character> alphabet = new LinkedHashSet<>();
-    for (final char c : content.toCharArray()) {
-      alphabet.add(c);
+    for (int i = 0; i < content.length(); i++) {
+      alphabet.add(content.charAt(i));
     }
     return alphabet;
   }
@@ -83,15 +84,13 @@ public final class FCM {
     for (Map.Entry<String, Map<Character, Integer>> entry : contextCounts.entrySet()) {
       Map<Character, Integer> counts = entry.getValue();
       // Sum of counts for the context
-      final int contextTotalCount = counts.values().stream().mapToInt(Integer::intValue).sum();
+      final int contextTotalCount = counts.values().stream().reduce(0, Integer::sum);
       // Denominator: observed count plus smoothing mass for every character
       final float denominator = contextTotalCount + alphaTimesAlphabet;
-      for (char c : alphabet) {
-        final Integer count = counts.get(c);
-        if (count != null) {
-          final float probability = (count + alpha) / denominator;
-          sumLogProb += count * (float) Math.log(probability);
-        }
+      for (var countsEntry : counts.entrySet()) {
+        final int count = countsEntry.getValue();
+        final float probability = (count + alpha) / denominator;
+        sumLogProb += count * (float) Math.log(probability);
       }
     }
     return sumLogProb;
