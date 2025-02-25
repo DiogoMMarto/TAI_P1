@@ -6,3 +6,5 @@ fcm_debug:
 
 clean:
 	rm -rf fcm fcm_debug
+
+all: clean fcm fcm_debug

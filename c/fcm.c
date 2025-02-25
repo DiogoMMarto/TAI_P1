@@ -5,6 +5,15 @@
 #include <math.h>
 #include <time.h>
 
+#define mulH 31     
+#define PH   2147483647     // 2^32-1
+#define SEED 0
+
+#define INITIAL_CAPACITY 4096
+#define LOAD_FACTOR 0.6
+
+#define STORE_HASH 0
+
 typedef struct {
     char* input;
     int depth;
@@ -33,22 +42,19 @@ typedef struct {
     uint32_t size;
 } HashTable;
 
-#if 1
-#define mulH 31     // 32-bit FNV offset basis
-#define PH   2147483647     // 2^32-1
-#define SEED 0
 uint32_t hash(const char *data, uint32_t length) {
     uint64_t hash = 0;
-    
-    for (uint32_t i = 0; i < length; ++i) {
+    uint64_t* data64 = (uint64_t*)data;
+    uint32_t i = 0;
+    for (; i + sizeof(uint64_t) <= length; i+=sizeof(uint64_t)) {
+        hash = ((hash * mulH) + *data64++) % PH;
+    }
+    for(; i < length; i++) { // this works well bcs at the end we still scramble a bit
         hash = ((hash * mulH) + data[i]) % PH;
     }
-    return hash;
+    return ((hash * mulH) + hash) % PH; // avoids collisions experimentally
 }
-#endif
 
-#define INITIAL_CAPACITY 2048
-#define LOAD_FACTOR 0.6
 HashTable* hashtable_create(uint32_t context_length) {
     HashTable* table = malloc(sizeof(HashTable));
     table->context_length = context_length;
@@ -58,26 +64,14 @@ HashTable* hashtable_create(uint32_t context_length) {
     return table;
 }
 
-#if 0 
-int strcmpDepth(const char* a, const char* b, uint32_t depth) {
-    uint32_t i = 1;
-    uint64_t* a64 = (uint64_t*)a;
-    uint64_t* b64 = (uint64_t*)b;
-    for(;*a64 && (*a64 == *b64) && i < depth; i+=sizeof(uint64_t), a64++, b64++);
-    uint64_t mask = -1ull << (sizeof(uint64_t)*((8 - depth + i)));
+uint64_t strcmpDepth(const char* a, const char* b, uint32_t depth) {
+    uint32_t i = 0;
+    const uint64_t* a64 = (uint64_t*)a;
+    const uint64_t* b64 = (uint64_t*)b;
+    for(;*a64 && (*a64 == *b64) && i + sizeof(uint64_t) <= depth; i+=sizeof(uint64_t), a64++, b64++);
+    uint64_t mask = -1ull >> 8*(8 - depth % 8)*(i >= (depth-depth%8));
     return (*a64 & mask ) - (*b64 & mask);
 }
-#else
-int strcmpDepth(const char* a, const char* b, uint32_t depth) {
-    uint32_t i = 1;
-    while(*a && (*a == *b) && i < depth) {
-        a++;
-        b++;
-        i++;
-    }
-    return *a - *b;
-}
-#endif
 
 uint32_t probe(HashTable* table,  uint32_t h , char* key) {
     uint64_t index = h % table->capacity;
@@ -166,7 +160,7 @@ Args parse_args(int argc, char* argv[]) {
     args.input = argv[1];
     for (int i = 2; i < argc; ) {
         char* arg = argv[i];
-        if (strcmp(arg, "-k") || strcmp(arg, "--depth")) {
+        if (strcmp(arg, "-k") == 0 || strcmp(arg, "--depth") == 0 ) {
             if (i + 1 >= argc) {
                 printf("Missing value for %s\n", arg);
                 exit(1);
@@ -251,7 +245,6 @@ double estimate_prob(char* text, uint32_t size, int ko, double alpha, uint32_t a
         char* context = text + i;
         hashtable_increment(table, context);
     }
-
     HashTable* sub_table = hashtable_create(context_length - 1);
     for(uint32_t i = 0; i < table->capacity; i++) {
         if (!table->entries[i].key) {
@@ -261,7 +254,6 @@ double estimate_prob(char* text, uint32_t size, int ko, double alpha, uint32_t a
         uint32_t value = table->entries[i].value;
         hashtable_increment_by(sub_table, context, value);
     }
-
     double sum_total = 0;
     for(uint32_t i = 0; i < table->capacity; i++) {
         if (!table->entries[i].key) {
