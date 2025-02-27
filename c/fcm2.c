@@ -10,9 +10,7 @@
 #define SEED 8589934621
 
 #define INITIAL_CAPACITY 2048
-#define INITIAL_CAPACITY_ARRAY 8
 #define LOAD_FACTOR 0.6
-#define LOAD_FACTOR_2 0.6
 
 typedef struct {
     char* input;
@@ -30,16 +28,9 @@ Args default_args() {
 }
 
 typedef struct {
-    char c;
-    uint32_t count;
-} CharInt;
-
-typedef struct {
     char* key;
+    uint32_t value;
     uint32_t hash;
-    uint32_t size;
-    uint32_t capacity;
-    CharInt* entries;
 } HashEntry;
 
 typedef struct {
@@ -92,51 +83,6 @@ uint32_t probe(HashTable* table,  uint32_t h , char* key) {
     return index; 
 }
 
-uint32_t probe2(HashEntry* e , char c) {
-    uint32_t h = ((SEED * mulH) + c) % PH;
-    h = ((h * mulH) + h) % e->capacity;
-    while (e->entries[h].c && e->entries[h].c != c) {
-        h = (h + 1) % e->capacity;
-    }
-    return h;
-}
-
-void da_resize(HashEntry* e) {
-    uint32_t new_capacity = 1 + e->capacity * 2;
-    CharInt* new_entries = calloc(new_capacity, sizeof(CharInt));
-    for (uint32_t i = 0; i < e->capacity; i++) {
-        CharInt* entry = &e->entries[i];
-        if (entry->c != '\0') {
-            uint32_t index = ((SEED * mulH) + entry->c) % PH;
-            index = ((index * mulH) + index) % new_capacity;
-            while (new_entries[index].c && new_entries[index].c != entry->c) {
-                index = (index + 1) % new_capacity;
-            }
-            new_entries[index] = *entry;
-        }
-    }
-    free(e->entries);
-    e->entries = new_entries;
-    e->capacity = new_capacity;
-}
-
-void da_insert(HashEntry* e , char c , uint32_t count) {
-    if(e->size >= e->capacity * LOAD_FACTOR_2) {
-        da_resize(e);
-    };
-    uint32_t index = probe2(e, c);
-    if (e->entries[index].c == '\0') {
-        e->entries[index].c = c;
-        e->size++;
-    };
-    e->entries[index].count += count;
-}
-
-uint32_t da_get(HashEntry* e , char c) {
-    uint32_t index = probe2(e, c);
-    return e->entries[index].count;
-}
-
 void hashtable_resize(HashTable* table) {
     uint32_t new_capacity = table->capacity * 2;
     HashEntry* new_entries = calloc(new_capacity, sizeof(HashEntry));
@@ -149,7 +95,7 @@ void hashtable_resize(HashTable* table) {
                 index = (index + j) % new_capacity;
                 j++;
             }
-            new_entries[index]= *entry;
+            new_entries[index]= table->entries[i];
         }
     }
     free(table->entries);
@@ -165,14 +111,13 @@ void hashtable_increment(HashTable* table, char* key) {
     uint64_t index = probe(table, h, key);
     HashEntry* entry = &table->entries[index];
     if (!entry->key) {
-        table->size++;
         entry->key = key;
+        entry->value = 1;
         entry->hash = h;
-        entry->size = 0;
-        entry->capacity = 0;
-        entry->entries = malloc(INITIAL_CAPACITY*sizeof(CharInt));
-    } 
-    da_insert(entry, key[table->context_length], 1);
+        table->size++;
+    } else {
+        entry->value++;
+    }
 }
 
 void hashtable_increment_by(HashTable* table, char* key, uint32_t value) {
@@ -183,14 +128,13 @@ void hashtable_increment_by(HashTable* table, char* key, uint32_t value) {
     uint64_t index = probe(table, h, key);
     HashEntry* entry = &table->entries[index];
     if (!entry->key) {
-        table->size++;
         entry->key = key;
+        entry->value = value;
         entry->hash = h;
-        entry->size = 0;
-        entry->capacity = 0;
-        entry->entries = malloc(INITIAL_CAPACITY*sizeof(CharInt));
-    } 
-    da_insert(entry, key[table->context_length], value);
+        table->size++;
+    } else {
+        entry->value += value;
+    }
 }
 
 int hashtable_get(HashTable* table, char* key) {
@@ -199,7 +143,7 @@ int hashtable_get(HashTable* table, char* key) {
     if (!table->entries[index].key) {
         return 0;
     }
-    return da_get(&table->entries[index], key[table->context_length]);
+    return table->entries[index].value;
 }
 
 void hashtable_free(HashTable* table) {
@@ -292,41 +236,37 @@ double estimate_prob(char* text, uint32_t size, int ko, double alpha, uint32_t a
         printf("Depth must be non-negative\n");
         exit(1);
     }
-    double const_term = alpha * alphabet_size;
-    uint32_t context_length = ko;
-    uint32_t max_i = size - context_length - 1;
+    double const_term = alpha * (double) alphabet_size;
+    uint32_t context_length = ko + 1;
+    uint32_t max_i = size - context_length;
 
     HashTable* table = hashtable_create(context_length);
     for (uint32_t i = 0; i < max_i; i++) {
         char* context = text + i;
         hashtable_increment(table, context);
     }
-
-    double sum_total = 0;
+    HashTable* sub_table = hashtable_create(context_length - 1);
     for(uint32_t i = 0; i < table->capacity; i++) {
-        HashEntry* entry = &table->entries[i];
-        if (entry->key == NULL) {
+        if (!table->entries[i].key) {
             continue;
         }
-        double  denom = 0;
-        for(uint32_t j = 0; j < entry->capacity; j++) {
-            CharInt* char_int = &entry->entries[j];
-            if(char_int->c == '\0') {
-                continue;   
-            }
-            denom += char_int->count;
+        char* context = table->entries[i].key;
+        uint32_t value = table->entries[i].value;
+        hashtable_increment_by(sub_table, context, value);
+    }
+    double sum_total = 0;
+    for(uint32_t i = 0; i < table->capacity; i++) {
+        if (!table->entries[i].key) {
+            continue;
         }
-        denom += const_term;
-        for(uint32_t j = 0; j < entry->capacity; j++) {
-            CharInt* char_int = &entry->entries[j];
-            if(char_int->c == '\0') {
-                continue;   
-            }
-            sum_total += char_int->count * log((char_int->count+alpha) / denom);
-        }
+        double count = table->entries[i].value;
+        char* context = table->entries[i].key;
+        double sum = hashtable_get(sub_table, context);
+        sum_total += count * log((count + alpha) / (sum + const_term));
     }
 
     hashtable_free(table);
+    hashtable_free(sub_table);
     return -sum_total / ( max_i * log(2) );
 }
 
@@ -336,7 +276,7 @@ int main(int argc, char* argv[]) {
     uint32_t size = 0;
     char* text = read_file(args.input, &size);
     uint32_t alphabet_siz = alphabet_size(text, size);
-    
+
     clock_t t = clock();
     double prob = estimate_prob(text, size, args.depth, args.alpha, alphabet_siz);
     t = clock() - t;

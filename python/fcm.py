@@ -19,6 +19,7 @@ def estimate_prob(text: str,ko: int, alpha: float, alphabet: set[str])-> dict[st
         sums[k[0]] = sums.get(k[0], const) + v
         
     sum_ = 0
+    print(sorted(list(table.items())))
     for k,v in table.items():
         sum_ += v * log((v + alpha)/sums[k[0]])
     return sum_*-1/(len(text)-ko)/log(2)
