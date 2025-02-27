@@ -6,13 +6,11 @@
 #include <time.h>
 
 #define mulH 31     
-#define PH   2147483647     // 2^32-1
-#define SEED 0
+#define PH   4294967029     // large prime
+#define SEED 8589934621
 
-#define INITIAL_CAPACITY 4096
+#define INITIAL_CAPACITY 2048
 #define LOAD_FACTOR 0.6
-
-#define STORE_HASH 0
 
 typedef struct {
     char* input;
@@ -68,7 +66,9 @@ uint64_t strcmpDepth(const char* a, const char* b, uint32_t depth) {
     uint32_t i = 0;
     const uint64_t* a64 = (uint64_t*)a;
     const uint64_t* b64 = (uint64_t*)b;
-    for(;*a64 && (*a64 == *b64) && i + sizeof(uint64_t) <= depth; i+=sizeof(uint64_t), a64++, b64++);
+    for(;i + sizeof(uint64_t) <= depth; i+=sizeof(uint64_t), a64++, b64++){
+        if(*a64 != *b64) return 1;
+    };
     uint64_t mask = -1ull >> 8*(8 - depth % 8)*(i >= (depth-depth%8));
     return (*a64 & mask ) - (*b64 & mask);
 }
