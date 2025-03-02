@@ -36,14 +36,14 @@ public final class Main implements Callable<Integer> {
 
   @Override
   public Integer call() {
+    FCM fcm = new FCM();
     if (type.equals("generator") || type.equals("g")) {
-      log.info("Running generator -> a: " + alpha + ", k: " + k + ", file: " + fileName);
-      Generator generator = new Generator();
+      log.info("Running Generator -> a: " + alpha + ", k: " + k + ", file: " + fileName);
+      Generator generator = new Generator(fcm);
       generator.run(alpha, k, fileName, prior, verbose);
     } else {
       log.info("Running FCM -> a: " + alpha + ", k: " + k + ", file: " + fileName);
-      FCM fcm = new FCM();
-      fcm.run(alpha, k, fileName, verbose);
+      fcm.online(alpha, k, fileName, verbose);
     }
     return 0;
   }
