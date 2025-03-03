@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="FMC" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="pt.ua.iky.Main" />
+    <module name="tai" />
+    <option name="PROGRAM_PARAMETERS" value="fmc -k 5 -a 0.1 -f src/main/resources/sequence1.txt" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
