@@ -1,16 +1,16 @@
 package pt.ua.tai.Generator;
 
-import pt.ua.tai.FCM.Generator.Enum.Mode;
-import pt.ua.tai.FCM.Generator.Enum.Search;
-import pt.ua.tai.FCM.Generator.Predictor.ContextSearcher.ContextSearcher;
-import pt.ua.tai.FCM.Generator.Predictor.ContextSearcher.ContextSearcherPopularSuffix;
-import pt.ua.tai.FCM.Generator.Predictor.ContextSearcher.ContextSearcherRandom;
-import pt.ua.tai.FCM.Generator.Predictor.Predictor;
-import pt.ua.tai.FCM.Generator.Predictor.PredictorMax;
-import pt.ua.tai.FCM.Generator.Predictor.PredictorProb;
-import pt.ua.tai.FCM.Generator.Predictor.PredictorProbAlpha;
-import pt.ua.tai.FCM.Generator.Processor.Processor;
-import pt.ua.tai.FCM.Generator.Processor.ProcessorProbAlpha;
+import pt.ua.tai.Generator.Enum.Mode;
+import pt.ua.tai.Generator.Enum.Search;
+import pt.ua.tai.Generator.Predictor.ContextSearcher.ContextSearcher;
+import pt.ua.tai.Generator.Predictor.ContextSearcher.ContextSearcherPopularSuffix;
+import pt.ua.tai.Generator.Predictor.ContextSearcher.ContextSearcherRandom;
+import pt.ua.tai.Generator.Predictor.Predictor;
+import pt.ua.tai.Generator.Predictor.PredictorMax;
+import pt.ua.tai.Generator.Predictor.PredictorProb;
+import pt.ua.tai.Generator.Predictor.PredictorProbAlpha;
+import pt.ua.tai.Generator.Processor.Processor;
+import pt.ua.tai.Generator.Processor.ProcessorProbAlpha;
 import pt.ua.tai.utils.FileHandler;
 
 import java.io.IOException;

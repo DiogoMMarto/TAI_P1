@@ -7,7 +7,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 import pt.ua.tai.FCM.FCM;
-import pt.ua.tai.FCM.Generator.Generator;
+import pt.ua.tai.Generator.Generator;
 
 @Command(name = "Main", mixinStandardHelpOptions = true, version = "1.0",
     description = "Runs the FCM algorithm with the given parameters.")
