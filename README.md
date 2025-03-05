@@ -14,11 +14,9 @@ Each folder contains an implemention of the project in their respective language
 | cpp      | ✅ | ❌        |
 | rust     | ✅ | ❌        |
 | python   | ✅ | ✅        |
-| java     | ✅ | ✅        |
+| java     | ✅ | ❌        |
 
 ## Authors
 
 - Diogo Machado Marto NºMec 108298
 - Ilker Atik NºMec 123947
-- Miguel Vieira NºMec 85095
-- Diogo Pinto NºMec 110341
