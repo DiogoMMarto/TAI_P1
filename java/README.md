@@ -2,7 +2,7 @@
 
 ## Build JAR
 
-`mvn package` \
+`mvn package`
 
 ## Program arguments
 
