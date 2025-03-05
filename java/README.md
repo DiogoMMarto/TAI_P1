@@ -30,4 +30,4 @@ Runs the FCM or Generator algorithm with the given parameters.
   `java -jar target/tai-1.0-SNAPSHOT.jar fcm -a 1 -k 1 -f sequence1.txt`
 
 - Enable verbose output:
-  `java -jar target/tai-1.0-SNAPSHOT.jar 0.01 1 sequence1.txt true`
+  `java -jar target/tai-1.0-SNAPSHOT.jar -a 1 -k 1 -f sequence1.txt -v true`
