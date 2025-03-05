@@ -10,7 +10,7 @@ import pt.ua.tai.fcm.FCM;
 import pt.ua.tai.generator.Generator;
 
 @Command(name = "Main", mixinStandardHelpOptions = true, version = "1.0",
-    description = "Runs the FCM algorithm with the given parameters.")
+    description = "Runs the FCM or Generator algorithm with the given parameters.")
 public final class Main implements Callable<Integer> {
 
   private static final Logger log = Logger.getLogger(Main.class.getName());
