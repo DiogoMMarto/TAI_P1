@@ -1,4 +1,4 @@
-package pt.ua.Generator.Processor;
+package pt.ua.tai.Generator.Processor;
 
 import java.util.HashMap;
 import java.util.Map;

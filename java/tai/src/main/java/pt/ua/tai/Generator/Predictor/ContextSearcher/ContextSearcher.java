@@ -1,4 +1,4 @@
-package pt.ua.Generator.Predictor.ContextSearcher;
+package pt.ua.tai.Generator.Predictor.ContextSearcher;
 
 import java.util.Map;
 

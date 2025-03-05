@@ -1,4 +1,4 @@
-package pt.ua.utils;
+package pt.ua.tai.utils;
 
 import java.io.IOException;
 import java.nio.file.Files;

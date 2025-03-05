@@ -1,4 +1,4 @@
-package pt.ua.Generator.Enum;
+package pt.ua.tai.Generator.Enum;
 
 public enum Mode {
     PROBABILITY,

@@ -13,7 +13,7 @@
             <manifest>
               <addClasspath>true</addClasspath>
               <classpathPrefix>lib/</classpathPrefix>
-              <mainClass>pt.ua.iky.Main</mainClass>
+              <mainClass>pt.ua.tai.Main</mainClass>
             </manifest>
           </archive>
         </configuration>

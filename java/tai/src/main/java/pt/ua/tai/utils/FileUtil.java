@@ -1,4 +1,4 @@
-package pt.ua.iky;
+package pt.ua.tai.utils;
 
 import static java.util.logging.Level.SEVERE;
 import static java.util.logging.Level.WARNING;

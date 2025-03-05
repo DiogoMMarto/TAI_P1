@@ -1,6 +1,6 @@
-package pt.ua.Generator.Predictor;
+package pt.ua.tai.Generator.Predictor;
 
-import pt.ua.Generator.Predictor.ContextSearcher.ContextSearcher;
+import pt.ua.tai.FCM.Generator.Predictor.ContextSearcher.ContextSearcher;
 
 import java.util.Map;
 
