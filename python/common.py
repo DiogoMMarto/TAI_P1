@@ -11,6 +11,7 @@ def estimate_table(text: str,k: int, alpha: float, alphabet: set[str])-> dict[st
         context = text[i:i+k]
         next_char = text[i+k]
         table[(context,next_char)] = table.setdefault((context,next_char),0) + 1
+        
     
     sums = {}
     for k,v in table.items():

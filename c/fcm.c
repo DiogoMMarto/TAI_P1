@@ -16,6 +16,7 @@
 
 typedef struct {
     char* input;
+    char* output;
     int depth;
     double alpha;
     char timer;
@@ -26,6 +27,7 @@ Args default_args() {
     args.depth = 2;
     args.alpha = 1.0;
     args.timer = 0;
+    args.output = NULL;
     return args;
 }
 
@@ -39,6 +41,7 @@ typedef struct {
     uint32_t hash;
     uint32_t size;
     uint32_t capacity;
+    uint32_t total;
     CharInt* entries;
 } HashEntry;
 
@@ -120,7 +123,7 @@ void da_resize(HashEntry* e) {
     e->capacity = new_capacity;
 }
 
-void da_insert(HashEntry* e , char c , uint32_t count) {
+uint32_t da_insert(HashEntry* e , char c , uint32_t count) {
     if(e->size >= e->capacity * LOAD_FACTOR_2) {
         da_resize(e);
     };
@@ -130,6 +133,7 @@ void da_insert(HashEntry* e , char c , uint32_t count) {
         e->size++;
     };
     e->entries[index].count += count;
+    return e->entries[index].count;
 }
 
 uint32_t da_get(HashEntry* e , char c) {
@@ -157,7 +161,7 @@ void hashtable_resize(HashTable* table) {
     table->capacity = new_capacity;
 }
 
-void hashtable_increment(HashTable* table, char* key) {
+void hashtable_increment(HashTable* table, char* key, uint32_t* count,uint32_t* total) {
     if (table->size >= table->capacity * LOAD_FACTOR) {
         hashtable_resize(table);
     }
@@ -170,12 +174,15 @@ void hashtable_increment(HashTable* table, char* key) {
         entry->hash = h;
         entry->size = 0;
         entry->capacity = 0;
+        entry->total = 0;
         entry->entries = malloc(INITIAL_CAPACITY*sizeof(CharInt));
     } 
-    da_insert(entry, key[table->context_length], 1);
+    entry->total++;
+    *total = entry->total;
+    *count = da_insert(entry, key[table->context_length], 1);
 }
 
-void hashtable_increment_by(HashTable* table, char* key, uint32_t value) {
+void hashtable_increment_by(HashTable* table, char* key, uint32_t value, uint32_t* count,uint32_t* total) {
     if (table->size >= table->capacity * LOAD_FACTOR) {
         hashtable_resize(table);
     }
@@ -188,9 +195,12 @@ void hashtable_increment_by(HashTable* table, char* key, uint32_t value) {
         entry->hash = h;
         entry->size = 0;
         entry->capacity = 0;
+        entry->total = 0;
         entry->entries = malloc(INITIAL_CAPACITY*sizeof(CharInt));
-    } 
-    da_insert(entry, key[table->context_length], value);
+    }
+    entry->total += value;
+    *total = entry->total;
+    *count = da_insert(entry, key[table->context_length], value);
 }
 
 int hashtable_get(HashTable* table, char* key) {
@@ -236,6 +246,13 @@ Args parse_args(int argc, char* argv[]) {
         } else if (strcmp(arg, "-h") == 0 || strcmp(arg, "--help") == 0) {
             printf("Usage: %s input.txt [-k depth] [-a alpha]\n", argv[0]);
             exit(0);
+        } else if (strcmp(arg, "-o") == 0 || strcmp(arg, "--output") == 0) {
+            if (i + 1 >= argc) {
+                printf("Missing value for %s\n", arg);
+                exit(1);
+            }
+            args.output = argv[i + 1];
+            i += 2;
         } else {
             printf("Unknown option: %s\n", arg);
             exit(1);
@@ -287,42 +304,34 @@ uint32_t alphabet_size(char* text, uint32_t size) {
     return siz;
 }
 
-double estimate_prob(char* text, uint32_t size, int ko, double alpha, uint32_t alphabet_size) {
+double estimate_prob(char* text, uint32_t size, int ko, double alpha, uint32_t alphabet_size, char* output_path) {
     if (ko < 0) {
         printf("Depth must be non-negative\n");
         exit(1);
     }
+    FILE* output_file;
+    if (output_path != NULL) {
+        output_file = fopen(output_path, "w");
+        if (output_file == NULL) {
+            printf("Could not open output file\n");
+            exit(1);
+        }
+    }
     double const_term = alpha * alphabet_size;
     uint32_t context_length = ko;
-    uint32_t max_i = size - context_length - 1;
+    uint32_t max_i = size - context_length;
 
     HashTable* table = hashtable_create(context_length);
+    double sum_total = 0;
     for (uint32_t i = 0; i < max_i; i++) {
         char* context = text + i;
-        hashtable_increment(table, context);
-    }
-
-    double sum_total = 0;
-    for(uint32_t i = 0; i < table->capacity; i++) {
-        HashEntry* entry = &table->entries[i];
-        if (entry->key == NULL) {
-            continue;
-        }
-        double  denom = 0;
-        for(uint32_t j = 0; j < entry->capacity; j++) {
-            CharInt* char_int = &entry->entries[j];
-            if(char_int->c == '\0') {
-                continue;   
-            }
-            denom += char_int->count;
-        }
-        denom += const_term;
-        for(uint32_t j = 0; j < entry->capacity; j++) {
-            CharInt* char_int = &entry->entries[j];
-            if(char_int->c == '\0') {
-                continue;   
-            }
-            sum_total += char_int->count * log((char_int->count+alpha) / denom);
+        uint32_t total;
+        uint32_t count;
+        hashtable_increment(table, context, &count, &total);
+        double symbol_length = log(((double) count+alpha) / ((double)total+const_term));
+        sum_total += symbol_length;
+        if (output_path != NULL) {
+            fwrite(&symbol_length, sizeof(double), 1, output_file);
         }
     }
 
@@ -338,7 +347,7 @@ int main(int argc, char* argv[]) {
     uint32_t alphabet_siz = alphabet_size(text, size);
     
     clock_t t = clock();
-    double prob = estimate_prob(text, size, args.depth, args.alpha, alphabet_siz);
+    double prob = estimate_prob(text, size, args.depth, args.alpha, alphabet_siz,args.output);
     t = clock() - t;
 
     printf("%f\n", prob);
