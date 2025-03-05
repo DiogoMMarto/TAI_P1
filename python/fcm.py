@@ -25,6 +25,7 @@ def estimate_prob(text: str,ko: int, alpha: float, alphabet: set[str])-> dict[st
     return sum_*-1/(len(text)-ko)/log(2)
 
 
+
 def main():
     # ./fcm input_text.txt -k 3 -a 0.01
     parser = argparse.ArgumentParser(description="Calculate the average information content of a Sequence.")
