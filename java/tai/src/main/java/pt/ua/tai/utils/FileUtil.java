@@ -9,6 +9,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.logging.Logger;
 
 public final class FileUtil {
@@ -70,5 +72,9 @@ public final class FileUtil {
     while ((line = br.readLine()) != null) {
       resultStringBuilder.append(line).append("\n");
     }
+  }
+
+  public static String readTxtFileToString(String fileName) throws IOException {
+    return Files.readString(Paths.get(fileName));
   }
 }

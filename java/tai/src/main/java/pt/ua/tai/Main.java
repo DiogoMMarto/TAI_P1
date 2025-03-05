@@ -6,8 +6,8 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-import pt.ua.tai.FCM.FCM;
-import pt.ua.tai.Generator.Generator;
+import pt.ua.tai.fcm.FCM;
+import pt.ua.tai.generator.Generator;
 
 @Command(name = "Main", mixinStandardHelpOptions = true, version = "1.0",
     description = "Runs the FCM algorithm with the given parameters.")
@@ -15,7 +15,6 @@ public final class Main implements Callable<Integer> {
 
   private static final Logger log = Logger.getLogger(Main.class.getName());
 
-  //  @Option(names = {"-t","--type"}, description = "Type of application (fcm or generator)", defaultValue = "fcm")
   @Parameters(index = "0", description = "Type of application (fcm or generator)", defaultValue = "fcm")
   private String type;
   @Option(names = {"-p", "--prior"}, description = "Prior string for generator")
@@ -32,13 +31,17 @@ public final class Main implements Callable<Integer> {
   private String fileName;
   @Option(names = {"-v", "--verbose"}, description = "Verbose output", defaultValue = "false")
   private boolean verbose;
-  @Option(names = {"-m", "--mode"}, description = "Mode of operation (e.g., PROBABILITY, MAX, PROBABILITYALPHA)", defaultValue = "PROBABILITY")
+  @Option(names = {"-m", "--mode"},
+      description = "Mode of operation (e.g., PROBABILITY, MAX, PROBABILITYALPHA)", defaultValue = "PROBABILITY")
   private String mode;
-  @Option(names = {"-sm", "--searchMode"}, description = "Search mode (e.g., CUTFIRSTCHAR, RANDOM)", defaultValue = "CUTFIRSTCHAR")
+  @Option(names = {"-sm", "--searchMode"},
+      description = "Search mode (e.g., CUTFIRSTCHAR, RANDOM)", defaultValue = "CUTFIRSTCHAR")
   private String searchMode;
-  @Option(names = {"-s", "--seeding"}, description = "Seed value for random number generation", required = false)
+  @Option(names = {"-s", "--seeding"},
+      description = "Seed value for random number generation", required = false)
   private Integer seed;
-  @Option(names = {"-pf", "--priorFix"}, description = "Enable prior fixing", defaultValue = "false")
+  @Option(names = {"-pf", "--priorFix"},
+      description = "Enable prior fixing", defaultValue = "false")
   private boolean priorFix;
 
   public static void main(String[] args) {
@@ -52,42 +55,42 @@ public final class Main implements Callable<Integer> {
   public Integer call() {
     FCM fcm = new FCM();
     if (type.equals("generator") || type.equals("g")) {
-      /*
       log.info("Running Generator -> a: " + alpha + ", k: " + k + ", file: " + fileName);
-      Generator generator = new Generator(fcm);
-      generator.run(alpha, k, fileName, prior, verbose);*/
-      log.info("Running Generator -> a: " + alpha + ", k: " + k + ", file: " + fileName);
-      if (prior==null){
-        throw new RuntimeException("Prior (-p) required for generator");
+      if (prior == null) {
+        throw new IllegalArgumentException("Prior (-p) required for generator");
+      } else if (responseLength == null) {
+        throw new IllegalArgumentException("Response Length (-rl) required for generator");
       }
-      if (responseLength==null){
-        throw new RuntimeException("Response Length (-rl) required for generator");
-      }
-      Generator generator = new Generator(prior,responseLength,fileName);
-        try {
-          generator.setK(k);
-          generator.setAlpha((double) alpha);
-          generator.setMode(mode);
-          generator.setSearchMode(searchMode);
-          if (seed != null) {
-            generator.seeding(seed);
-          }
-          if (priorFix) {
-            generator.priorFixing();
-          }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        generator.init();
-      if(cmd){
+      Generator generator = createGenerator();
+      if (cmd) {
         generator.generateToCmdChar();
-      }else {
-        System.out.println(generator.generate());
+      } else {
+        log.info(generator.generate());
       }
     } else {
       log.info("Running FCM -> a: " + alpha + ", k: " + k + ", file: " + fileName);
       fcm.online(alpha, k, fileName, verbose);
     }
     return 0;
+  }
+
+  private Generator createGenerator() {
+    Generator generator = new Generator(prior, responseLength, fileName);
+    try {
+      generator.setK(k);
+      generator.setAlpha((double) alpha);
+      generator.setMode(mode);
+      generator.setSearchMode(searchMode);
+      if (seed != null) {
+        generator.seeding(seed);
+      }
+      if (priorFix) {
+        generator.priorFixing();
+      }
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    generator.init();
+    return generator;
   }
 }
