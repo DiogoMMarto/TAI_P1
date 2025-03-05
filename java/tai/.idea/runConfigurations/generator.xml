@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="generator" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="pt.ua.tai.Main" />
+    <module name="tai" />
+    <option name="PROGRAM_PARAMETERS" value="g -k 5 -a 0.1 -p &quot;ATGAA&quot; -f src/main/resources/sequence1.txt -pf -rl 500" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
