@@ -6,39 +6,42 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-import pt.ua.tai.FCM.FCM;
-import pt.ua.tai.Generator.Generator;
+import pt.ua.tai.fcm.FCM;
+import pt.ua.tai.generator.Generator;
 
 @Command(name = "Main", mixinStandardHelpOptions = true, version = "1.0",
-    description = "Runs the FCM algorithm with the given parameters.")
+    description = "Runs the FCM or Generator algorithm with the given parameters.")
 public final class Main implements Callable<Integer> {
 
   private static final Logger log = Logger.getLogger(Main.class.getName());
 
-  //  @Option(names = {"-t","--type"}, description = "Type of application (fcm or generator)", defaultValue = "fcm")
   @Parameters(index = "0", description = "Type of application (fcm or generator)", defaultValue = "fcm")
   private String type;
   @Option(names = {"-p", "--prior"}, description = "Prior string for generator")
   private String prior;
   @Option(names = {"-rl", "--responseLength"}, description = "Length of the response for generator")
   private Integer responseLength;
-  @Option(names = {"-c", "--char"}, description = "Output char by char", defaultValue = "true")
+  @Option(names = {"-nc", "--noChar"}, description = "Disable output char by char", defaultValue = "false")
   private boolean cmd;
-  @Option(names = {"-a", "--alpha"}, description = "Alpha value", required = true)
-  private float alpha;
-  @Option(names = {"-k", "--context"}, description = "Context width", required = true)
-  private int k;
+  @Option(names = {"-a", "--alpha"}, description = "Smoothing parameter alpha")
+  private Float alpha;
+  @Option(names = {"-k", "--context"}, description = "Context width")
+  private Integer k;
   @Option(names = {"-f", "--file"}, description = "File name", required = true)
   private String fileName;
   @Option(names = {"-v", "--verbose"}, description = "Verbose output", defaultValue = "false")
   private boolean verbose;
-  @Option(names = {"-m", "--mode"}, description = "Mode of operation (e.g., PROBABILITY, MAX, PROBABILITYALPHA)", defaultValue = "PROBABILITY")
+  @Option(names = {"-m", "--mode"},
+      description = "Mode of operation (e.g., PROBABILITY, MAX, PROBABILITYALPHA)", defaultValue = "PROBABILITY")
   private String mode;
-  @Option(names = {"-sm", "--searchMode"}, description = "Search mode (e.g., CUTFIRSTCHAR, RANDOM)", defaultValue = "CUTFIRSTCHAR")
+  @Option(names = {"-sm", "--searchMode"},
+      description = "Search mode (e.g., CUTFIRSTCHAR, RANDOM)", defaultValue = "CUTFIRSTCHAR")
   private String searchMode;
-  @Option(names = {"-s", "--seeding"}, description = "Seed value for random number generation", required = false)
+  @Option(names = {"-s", "--seeding"},
+      description = "Seed value for random number generation")
   private Integer seed;
-  @Option(names = {"-pf", "--priorFix"}, description = "Enable prior fixing", defaultValue = "false")
+  @Option(names = {"-pf", "--priorFix"},
+      description = "Enable prior fixing", defaultValue = "false")
   private boolean priorFix;
 
   public static void main(String[] args) {
@@ -50,44 +53,55 @@ public final class Main implements Callable<Integer> {
 
   @Override
   public Integer call() {
-    FCM fcm = new FCM();
     if (type.equals("generator") || type.equals("g")) {
-      /*
-      log.info("Running Generator -> a: " + alpha + ", k: " + k + ", file: " + fileName);
-      Generator generator = new Generator(fcm);
-      generator.run(alpha, k, fileName, prior, verbose);*/
-      log.info("Running Generator -> a: " + alpha + ", k: " + k + ", file: " + fileName);
-      if (prior==null){
-        throw new RuntimeException("Prior (-p) required for generator");
+      //validate param generator specific
+      if (prior == null) {
+        throw new IllegalArgumentException("Prior (-p) required for generator");
+      } else if (responseLength == null) {
+        throw new IllegalArgumentException("Response Length (-rl) required for generator");
+      } else if(mode.equals("PROBABILITYALPHA") && alpha == null){
+        throw new IllegalArgumentException("Smoothing parameter alpha (-a) required for mode PROBABILITYALPHA in generator");
       }
-      if (responseLength==null){
-        throw new RuntimeException("Response Length (-rl) required for generator");
-      }
-      Generator generator = new Generator(prior,responseLength,fileName);
-        try {
-          generator.setK(k);
-          generator.setAlpha((double) alpha);
-          generator.setMode(mode);
-          generator.setSearchMode(searchMode);
-          if (seed != null) {
-            generator.seeding(seed);
-          }
-          if (priorFix) {
-            generator.priorFixing();
-          }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        generator.init();
-      if(cmd){
+
+      log.info("Running Generator -> a: " + alpha + ", k: " + k + ", file: " + fileName);
+      Generator generator = createGenerator();
+      if (!cmd) {
         generator.generateToCmdChar();
-      }else {
-        System.out.println(generator.generate());
+      } else {
+        log.info(generator.generate());
       }
     } else {
+      FCM fcm = new FCM();
+      //validate param fcm specific
+      if (k == null) {
+        throw new IllegalArgumentException("Context width (-k) required for FCM");
+      } else if (alpha == null) {
+        throw new IllegalArgumentException("Smoothing parameter alpha (-a) required for FCM");
+      }
+
       log.info("Running FCM -> a: " + alpha + ", k: " + k + ", file: " + fileName);
       fcm.online(alpha, k, fileName, verbose);
     }
     return 0;
+  }
+
+  private Generator createGenerator() {
+    Generator generator = new Generator(prior, responseLength, fileName);
+    try {
+      generator.setK(k);
+      generator.setAlpha((double) alpha);
+      generator.setMode(mode);
+      generator.setSearchMode(searchMode);
+      if (seed != null) {
+        generator.seeding(seed);
+      }
+      if (priorFix) {
+        generator.priorFixing();
+      }
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    generator.init();
+    return generator;
   }
 }
