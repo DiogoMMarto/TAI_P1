@@ -9,7 +9,7 @@
 Runs the FCM or Generator algorithm with the given parameters.
 <type>              Type of application (fcm or generator)
 -a, --alpha=<alpha>     Alpha value \
--c, --char Output char by char \
+-nc, --noChar Disable output char by char \
 -f, --file=<fileName>   File name \
 -h, --help Show this help message and exit. \
 -k, --context=<k>       Context width \
@@ -24,10 +24,25 @@ Runs the FCM or Generator algorithm with the given parameters.
 
 ## Example arguments
 
+### FMC examples
+
 - External file:
   `java -jar target/tai-1.0-SNAPSHOT.jar fcm -a 1 -k 1 -f /Users/ilker/Courses/TAI/TAI_P1/sequence1.txt`
+
 - If the file is under resources:
   `java -jar target/tai-1.0-SNAPSHOT.jar fcm -a 1 -k 1 -f sequence1.txt`
 
 - Enable verbose output:
   `java -jar target/tai-1.0-SNAPSHOT.jar -a 1 -k 1 -f sequence1.txt -v true`
+
+### Generator examples
+
+- Basic call (file under resources):
+  `java -jar target/tai-1.0-SNAPSHOT.jar g -f sequence1.txt -rl 500 -p "ATGAA"`
+
+- Recommended call:
+  `java -jar target/tai-1.0-SNAPSHOT.jar g -f sequence1.txt -rl 500 -p "ATGAATGAAT" -pf -k 5 -s 85095`
+
+- Extensive calls:
+  `java -jar target/tai-1.0-SNAPSHOT.jar g -f sequence1.txt -rl 500 -p "ATGAATGAAT" -pf -k 5 -s 85095 -m PROBABILITYALPHA -a 0.01 -nc`
+  `java -jar target/tai-1.0-SNAPSHOT.jar g -f sequence1.txt -rl 500 -p "ATGAATGAAT" -pf -k 5 -s 85095 -m MAX -sm RANDOM -nc`

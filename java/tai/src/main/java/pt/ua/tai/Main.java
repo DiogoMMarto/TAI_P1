@@ -21,12 +21,12 @@ public final class Main implements Callable<Integer> {
   private String prior;
   @Option(names = {"-rl", "--responseLength"}, description = "Length of the response for generator")
   private Integer responseLength;
-  @Option(names = {"-c", "--char"}, description = "Output char by char", defaultValue = "true")
+  @Option(names = {"-nc", "--noChar"}, description = "Disable output char by char", defaultValue = "false")
   private boolean cmd;
-  @Option(names = {"-a", "--alpha"}, description = "Alpha value", required = true)
-  private float alpha;
-  @Option(names = {"-k", "--context"}, description = "Context width", required = true)
-  private int k;
+  @Option(names = {"-a", "--alpha"}, description = "Smoothing parameter alpha")
+  private Float alpha;
+  @Option(names = {"-k", "--context"}, description = "Context width")
+  private Integer k;
   @Option(names = {"-f", "--file"}, description = "File name", required = true)
   private String fileName;
   @Option(names = {"-v", "--verbose"}, description = "Verbose output", defaultValue = "false")
@@ -38,7 +38,7 @@ public final class Main implements Callable<Integer> {
       description = "Search mode (e.g., CUTFIRSTCHAR, RANDOM)", defaultValue = "CUTFIRSTCHAR")
   private String searchMode;
   @Option(names = {"-s", "--seeding"},
-      description = "Seed value for random number generation", required = false)
+      description = "Seed value for random number generation")
   private Integer seed;
   @Option(names = {"-pf", "--priorFix"},
       description = "Enable prior fixing", defaultValue = "false")
@@ -53,21 +53,32 @@ public final class Main implements Callable<Integer> {
 
   @Override
   public Integer call() {
-    FCM fcm = new FCM();
     if (type.equals("generator") || type.equals("g")) {
-      log.info("Running Generator -> a: " + alpha + ", k: " + k + ", file: " + fileName);
+      //validate param generator specific
       if (prior == null) {
         throw new IllegalArgumentException("Prior (-p) required for generator");
       } else if (responseLength == null) {
         throw new IllegalArgumentException("Response Length (-rl) required for generator");
+      } else if(mode.equals("PROBABILITYALPHA") && alpha == null){
+        throw new IllegalArgumentException("Smoothing parameter alpha (-a) required for mode PROBABILITYALPHA in generator");
       }
+
+      log.info("Running Generator -> a: " + alpha + ", k: " + k + ", file: " + fileName);
       Generator generator = createGenerator();
-      if (cmd) {
+      if (!cmd) {
         generator.generateToCmdChar();
       } else {
         log.info(generator.generate());
       }
     } else {
+      FCM fcm = new FCM();
+      //validate param fcm specific
+      if (k == null) {
+        throw new IllegalArgumentException("Context width (-k) required for FCM");
+      } else if (alpha == null) {
+        throw new IllegalArgumentException("Smoothing parameter alpha (-a) required for FCM");
+      }
+
       log.info("Running FCM -> a: " + alpha + ", k: " + k + ", file: " + fileName);
       fcm.online(alpha, k, fileName, verbose);
     }
