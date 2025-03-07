@@ -22,7 +22,7 @@ public class ContextSearcherPopularSuffix extends ContextSearcher {
     int aux = 1;
     while (possibleContexts.size() == 0) {
       if (aux == k) {
-        throw new Exception("No matches!");
+        throw new Exception("Context search "+context+": No matches!");
       }
       for (String key : countTable.keySet()) {
         if (key.substring(aux).equals(context.substring(aux))) {

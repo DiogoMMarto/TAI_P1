@@ -12,6 +12,7 @@ public class ProcessorProbAlpha extends Processor {
   public ProcessorProbAlpha(String content, int k, double alpha) {
     super(content, k);
     this.alpha = alpha;
+    this.probTable=new HashMap<>();
   }
 
   @Override

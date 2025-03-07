@@ -88,8 +88,12 @@ public final class Main implements Callable<Integer> {
   private Generator createGenerator() {
     Generator generator = new Generator(prior, responseLength, fileName);
     try {
-      generator.setK(k);
-      generator.setAlpha((double) alpha);
+      if(k!=null){
+        generator.setK(k);
+      }
+      if (alpha !=null){
+        generator.setAlpha((double) alpha);
+      }
       generator.setMode(mode);
       generator.setSearchMode(searchMode);
       if (seed != null) {
