@@ -133,11 +133,9 @@ public class Generator {
         if (seeding) {
           predictor = new PredictorProbAlpha(contextSearcher,
               ((ProcessorProbAlpha) processor).getProbTable(), responseLength, k, seed);
-          predictor.setTable(processor.getCountTable());
         } else {
           predictor = new PredictorProbAlpha(contextSearcher,
               ((ProcessorProbAlpha) processor).getProbTable(), responseLength, k);
-          predictor.setTable(processor.getCountTable());
         }
         break;
     }
@@ -172,7 +170,7 @@ public class Generator {
 
   public void preprocessing() {
     //generate counter table
-    //generate counter table for lower k case Seach.CUTFIRSTCHAR ToDo
+    //generate counter table for lower k case Search.CUTFIRSTCHAR ToDo
     processor.process();
   }
 

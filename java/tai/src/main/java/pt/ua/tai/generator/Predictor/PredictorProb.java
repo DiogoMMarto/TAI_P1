@@ -7,6 +7,7 @@ import pt.ua.tai.generator.Predictor.ContextSearcher.ContextSearcher;
 public class PredictorProb extends Predictor {
 
   private Random random;
+  private Map<Character, Integer> entries;
 
   public PredictorProb(ContextSearcher contextSearcher, Map<String, Map<Character, Integer>> table,
       int responseSize, int k) {
@@ -24,12 +25,12 @@ public class PredictorProb extends Predictor {
 
   @Override
   protected char chooseChar() {
-    Map<Character, Integer> tempProb = table.get(context);
-    int sum = tempProb.values().stream().reduce(0, Integer::sum);
+    entries=getEntries(context);
+    int sum = entries.values().stream().reduce(0, Integer::sum);
     int randomValue = random.nextInt(sum);
     int cumulativeSum = 0;
 
-    for (Map.Entry<Character, Integer> entry : tempProb.entrySet()) {
+    for (Map.Entry<Character, Integer> entry : entries.entrySet()) {
       cumulativeSum += entry.getValue();
       if (randomValue < cumulativeSum) {
         return entry.getKey();
