@@ -17,20 +17,22 @@ public final class Main implements Callable<Integer> {
 
   @Parameters(index = "0", description = "Type of application (fcm or generator)", defaultValue = "fcm")
   private String type;
-  @Option(names = {"-p", "--prior"}, description = "Prior string for generator")
-  private String prior;
-  @Option(names = {"-rl", "--responseLength"}, description = "Length of the response for generator")
-  private Integer responseLength;
-  @Option(names = {"-nc", "--noChar"}, description = "Disable output char by char", defaultValue = "false")
-  private boolean cmd;
-  @Option(names = {"-a", "--alpha"}, description = "Smoothing parameter alpha")
-  private Float alpha;
-  @Option(names = {"-k", "--contextWidth"}, description = "Context width")
-  private Integer k;
+
   @Option(names = {"-f", "--file"}, description = "File name", required = true)
   private String fileName;
   @Option(names = {"-v", "--verbose"}, description = "Verbose output", defaultValue = "false")
   private boolean verbose;
+  @Option(names = {"-a", "--alpha"}, description = "Smoothing parameter alpha")
+  private Float alpha;
+  @Option(names = {"-k", "--contextWidth"}, description = "Context width")
+  private Integer k;
+  @Option(names = {"-p", "--prior"}, description = "Prior string for generator")
+  private String prior;
+  @Option(names = {"-rl", "--responseLength"}, description = "Length of the response for generator")
+  private Integer responseLength;
+  @Option(names = {"-nc",
+      "--noChar"}, description = "Disable output char by char", defaultValue = "false")
+  private boolean cmd;
   @Option(names = {"-m", "--mode"},
       description = "Mode of operation (e.g., PROBABILITY, MAX, PROBABILITYALPHA)", defaultValue = "PROBABILITY")
   private String mode;
@@ -54,15 +56,7 @@ public final class Main implements Callable<Integer> {
   @Override
   public Integer call() {
     if (type.equals("generator") || type.equals("g")) {
-      //validate param generator specific
-      if (prior == null) {
-        throw new IllegalArgumentException("Prior (-p) required for generator");
-      } else if (responseLength == null) {
-        throw new IllegalArgumentException("Response Length (-rl) required for generator");
-      } else if(mode.equals("PROBABILITYALPHA") && alpha == null){
-        throw new IllegalArgumentException("Smoothing parameter alpha (-a) required for mode PROBABILITYALPHA in generator");
-      }
-
+      validateGeneratorParams();
       log.info("Running Generator -> a: " + alpha + ", k: " + k + ", file: " + fileName);
       Generator generator = createGenerator();
       if (!cmd) {
@@ -71,27 +65,40 @@ public final class Main implements Callable<Integer> {
         log.info(generator.generate());
       }
     } else {
-      FCM fcm = new FCM();
-      //validate param fcm specific
-      if (k == null) {
-        throw new IllegalArgumentException("Context width (-k) required for FCM");
-      } else if (alpha == null) {
-        throw new IllegalArgumentException("Smoothing parameter alpha (-a) required for FCM");
-      }
-
+      validateFcmParams();
       log.info("Running FCM -> a: " + alpha + ", k: " + k + ", file: " + fileName);
+      FCM fcm = new FCM();
       fcm.online(alpha, k, fileName, verbose);
     }
     return 0;
   }
 
+  private void validateGeneratorParams() {
+    if (prior == null) {
+      throw new IllegalArgumentException("Prior (-p) required for generator");
+    } else if (responseLength == null) {
+      throw new IllegalArgumentException("Response Length (-rl) required for generator");
+    } else if (mode.equals("PROBABILITYALPHA") && alpha == null) {
+      throw new IllegalArgumentException(
+          "Smoothing parameter alpha (-a) required for mode PROBABILITYALPHA in generator");
+    }
+  }
+
+  private void validateFcmParams() {
+    if (k == null) {
+      throw new IllegalArgumentException("Context width (-k) required for FCM");
+    } else if (alpha == null) {
+      throw new IllegalArgumentException("Smoothing parameter alpha (-a) required for FCM");
+    }
+  }
+
   private Generator createGenerator() {
     Generator generator = new Generator(prior, responseLength, fileName);
     try {
-      if(k!=null){
+      if (k != null) {
         generator.setK(k);
       }
-      if (alpha !=null){
+      if (alpha != null) {
         generator.setAlpha((double) alpha);
       }
       generator.setMode(mode);
@@ -107,5 +114,18 @@ public final class Main implements Callable<Integer> {
     }
     generator.init();
     return generator;
+  }
+
+  private void runExperiments() {
+    for (int f = 1; f <= 5; f++) {
+      final String file = "/Users/ilker/Courses/TAI/TAI_P1/sequence" + f + ".txt";
+      for (int c = 1; c <= 35; c += 1) {
+        for (float a = 0.001F; a <= 1.1F; a *= 10) {
+          log.info("Running FCM -> a: " + a + ", k: " + c + ", file: " + file);
+          FCM fcm = new FCM();
+          fcm.online(a, c, file, verbose);
+        }
+      }
+    }
   }
 }
