@@ -1,5 +1,6 @@
 package pt.ua.tai.generator;
 
+import static pt.ua.tai.utils.FileUtil.readFile;
 import static pt.ua.tai.utils.FileUtil.readTxtFileToString;
 
 import java.io.IOException;
@@ -79,11 +80,13 @@ public class Generator {
 
   public void init() {
     //read file to content string
+    /*
     try {
       content = readTxtFileToString(this.fileName);
     } catch (IOException e) {
       throw new RuntimeException("File:" + this.fileName + " Not Found!");
-    }
+    }*/
+    content = readFile(this.fileName);
     initProcessor();
   }
 
@@ -167,7 +170,7 @@ public class Generator {
 
   public void preprocessing() {
     //generate counter table
-    //generate counter table for lower k case Seach.CUTFIRSTCHAR ToDo
+    //generate counter table for lower k case Search.CUTFIRSTCHAR ToDo
     processor.process();
   }
 

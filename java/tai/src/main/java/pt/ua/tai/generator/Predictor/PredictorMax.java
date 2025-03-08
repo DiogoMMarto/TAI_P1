@@ -4,7 +4,7 @@ import java.util.Map;
 import pt.ua.tai.generator.Predictor.ContextSearcher.ContextSearcher;
 
 public class PredictorMax extends Predictor {
-
+  private Map<Character, Integer> entries;
 
   public PredictorMax(ContextSearcher contextSearcher, Map<String, Map<Character, Integer>> table,
       int responseSize, int k) {
@@ -14,6 +14,7 @@ public class PredictorMax extends Predictor {
 
   @Override
   protected char chooseChar() {
+    entries = getEntries(context);
     int max = 0;
     char c = ' ';
     for (Map.Entry<Character, Integer> entry : entries.entrySet()) {

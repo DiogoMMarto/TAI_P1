@@ -8,7 +8,6 @@ public abstract class Predictor {
   protected ContextSearcher contextSearcher;
   protected String response;
   protected String context;
-  protected Map<Character, Integer> entries;
   protected Map<String, Map<Character, Integer>> table;
   protected int responseSize;
   protected int k;
@@ -51,9 +50,6 @@ public abstract class Predictor {
       System.out.println(e.getMessage());
       return ' ';
     }
-
-    entries = getEntries(context);
-
     return chooseChar();
   }
 

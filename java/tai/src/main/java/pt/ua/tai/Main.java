@@ -25,7 +25,7 @@ public final class Main implements Callable<Integer> {
   private boolean cmd;
   @Option(names = {"-a", "--alpha"}, description = "Smoothing parameter alpha")
   private Float alpha;
-  @Option(names = {"-k", "--context"}, description = "Context width")
+  @Option(names = {"-k", "--contextWidth"}, description = "Context width")
   private Integer k;
   @Option(names = {"-f", "--file"}, description = "File name", required = true)
   private String fileName;
@@ -88,8 +88,12 @@ public final class Main implements Callable<Integer> {
   private Generator createGenerator() {
     Generator generator = new Generator(prior, responseLength, fileName);
     try {
-      generator.setK(k);
-      generator.setAlpha((double) alpha);
+      if(k!=null){
+        generator.setK(k);
+      }
+      if (alpha !=null){
+        generator.setAlpha((double) alpha);
+      }
       generator.setMode(mode);
       generator.setSearchMode(searchMode);
       if (seed != null) {
