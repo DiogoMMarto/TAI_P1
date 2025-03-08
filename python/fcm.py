@@ -19,7 +19,6 @@ def estimate_prob(text: str,ko: int, alpha: float, alphabet: set[str])-> dict[st
         sums[k[0]] = sums.get(k[0], const) + v
         
     sum_ = 0
-    print(sorted(list(table.items())))
     for k,v in table.items():
         sum_ += v * log((v + alpha)/sums[k[0]])
     return sum_*-1/(len(text)-ko)/log(2)
@@ -37,6 +36,8 @@ def main():
         
     text = open_file(args.input)
     alphabet = set(text)
+    print(len(alphabet))
+    print(alphabet)
     t = time.time()
     probability = estimate_prob(text, args.depth, args.alpha, alphabet)
     print(probability)
