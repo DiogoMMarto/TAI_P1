@@ -45,6 +45,9 @@ public final class Main implements Callable<Integer> {
   @Option(names = {"-pf", "--priorFix"},
       description = "Enable prior fixing", defaultValue = "false")
   private boolean priorFix;
+  @Option(names = {"-sc", "--saveCsv"},
+      description = "Save online probabilities and results to CSV", defaultValue = "false")
+  private boolean saveToCsv;
 
   public static void main(String[] args) {
     System.setProperty("java.util.logging.SimpleFormatter.format",
@@ -68,7 +71,7 @@ public final class Main implements Callable<Integer> {
       validateFcmParams();
       log.info("Running FCM -> a: " + alpha + ", k: " + k + ", file: " + fileName);
       FCM fcm = new FCM();
-      fcm.online(alpha, k, fileName, verbose);
+      fcm.online(alpha, k, fileName, verbose, saveToCsv);
     }
     return 0;
   }
@@ -123,7 +126,7 @@ public final class Main implements Callable<Integer> {
         for (float a = 0.001F; a <= 1.1F; a *= 10) {
           log.info("Running FCM -> a: " + a + ", k: " + c + ", file: " + file);
           FCM fcm = new FCM();
-          fcm.online(a, c, file, verbose);
+          fcm.online(a, c, file, verbose, true);
         }
       }
     }
