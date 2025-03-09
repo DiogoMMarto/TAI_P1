@@ -8,21 +8,21 @@ def open_file(file_path: str)-> str:
 
 def estimate_prob(text: str,ko: int, alpha: float, alphabet: set[str])-> dict[str,int]:
     table = {}
-    sums = {}
+    _sum = 0
+    const_term = alpha * len(alphabet)
     for i in range(len(text) - ko):
         context = text[i:i+ko]
         next_char = text[i+ko]
-        table[(context,next_char)] = table.get((context,next_char),0) + 1
+        context_table, total = table.get(context,({},0))
+        count = context_table.get(next_char,0)
         
-    const = alpha * len(alphabet)
-    for k,v in table.items():
-        sums[k[0]] = sums.get(k[0], const) + v
+        symbol_length = log(( count+alpha) / (total+const_term))
+        _sum += symbol_length
         
-    sum_ = 0
-    for k,v in table.items():
-        sum_ += v * log((v + alpha)/sums[k[0]])
-    return sum_*-1/(len(text)-ko)/log(2)
-
+        context_table[next_char] = count + 1
+        table[context] = (context_table, total + 1)
+        
+    return _sum*-1/(len(text)-ko)/log(2)
 
 
 def main():

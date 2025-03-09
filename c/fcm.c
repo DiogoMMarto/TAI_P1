@@ -12,7 +12,8 @@
 #define INITIAL_CAPACITY 2048
 #define INITIAL_CAPACITY_ARRAY 8
 #define LOAD_FACTOR 0.6
-#define LOAD_FACTOR_2 0.6
+#define LOAD_FACTOR_2 0.8
+#define GROWTH_FACTOR 2
 
 typedef struct {
     char* input;
@@ -34,7 +35,7 @@ Args default_args() {
 typedef struct {
     char c;
     uint32_t count;
-} CharInt;
+} CharInt; // MOVE THIS TO 2 ARRAYS TO IMPROVE THE MEMORY LAYOUT
 
 typedef struct {
     char* key;
@@ -105,7 +106,7 @@ uint32_t probe2(HashEntry* e , char c) {
 }
 
 void da_resize(HashEntry* e) {
-    uint32_t new_capacity = 1 + e->capacity * 2;
+    uint32_t new_capacity = e->capacity * GROWTH_FACTOR;
     CharInt* new_entries = calloc(new_capacity, sizeof(CharInt));
     for (uint32_t i = 0; i < e->capacity; i++) {
         CharInt* entry = &e->entries[i];
@@ -132,8 +133,9 @@ uint32_t da_insert(HashEntry* e , char c , uint32_t count) {
         e->entries[index].c = c;
         e->size++;
     };
+    uint32_t old_count = e->entries[index].count;
     e->entries[index].count += count;
-    return e->entries[index].count;
+    return old_count;
 }
 
 uint32_t da_get(HashEntry* e , char c) {
@@ -142,7 +144,7 @@ uint32_t da_get(HashEntry* e , char c) {
 }
 
 void hashtable_resize(HashTable* table) {
-    uint32_t new_capacity = table->capacity * 2;
+    uint32_t new_capacity = table->capacity * GROWTH_FACTOR;
     HashEntry* new_entries = calloc(new_capacity, sizeof(HashEntry));
     for (uint32_t i = 0; i < table->capacity; i++) {
         HashEntry* entry = &table->entries[i];
@@ -173,12 +175,11 @@ void hashtable_increment(HashTable* table, char* key, uint32_t* count,uint32_t* 
         entry->key = key;
         entry->hash = h;
         entry->size = 0;
-        entry->capacity = 0;
+        entry->capacity = INITIAL_CAPACITY_ARRAY;
         entry->total = 0;
-        entry->entries = malloc(INITIAL_CAPACITY*sizeof(CharInt));
+        entry->entries = calloc(INITIAL_CAPACITY_ARRAY,sizeof(CharInt));
     } 
-    entry->total++;
-    *total = entry->total;
+    *total = entry->total++;
     *count = da_insert(entry, key[table->context_length], 1);
 }
 
@@ -194,9 +195,9 @@ void hashtable_increment_by(HashTable* table, char* key, uint32_t value, uint32_
         entry->key = key;
         entry->hash = h;
         entry->size = 0;
-        entry->capacity = 0;
+        entry->capacity = INITIAL_CAPACITY_ARRAY;
         entry->total = 0;
-        entry->entries = malloc(INITIAL_CAPACITY*sizeof(CharInt));
+        entry->entries = calloc(INITIAL_CAPACITY_ARRAY,sizeof(CharInt));
     }
     entry->total += value;
     *total = entry->total;
@@ -319,16 +320,16 @@ double estimate_prob(char* text, uint32_t size, int ko, double alpha, uint32_t a
     }
     double const_term = alpha * alphabet_size;
     uint32_t context_length = ko;
-    uint32_t max_i = size - context_length;
+    uint32_t max_i = size - context_length ;
 
     HashTable* table = hashtable_create(context_length);
     double sum_total = 0;
     for (uint32_t i = 0; i < max_i; i++) {
+        uint32_t total = 0;
+        uint32_t count = 0;
         char* context = text + i;
-        uint32_t total;
-        uint32_t count;
         hashtable_increment(table, context, &count, &total);
-        double symbol_length = log(((double) count+alpha) / ((double)total+const_term));
+        double symbol_length = log(( count+alpha) / (total+const_term));
         sum_total += symbol_length;
         if (output_path != NULL) {
             fwrite(&symbol_length, sizeof(double), 1, output_file);
