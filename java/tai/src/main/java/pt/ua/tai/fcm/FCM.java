@@ -27,7 +27,7 @@ public class FCM {
   private final List<Float> logProbabilities = new ArrayList<>();
   private String content;
 
-  public void online(float alpha, int k, String fileName, boolean verbose) {
+  public void online(float alpha, int k, String fileName, boolean verbose, boolean saveToCsv) {
     content = null;
     try {
       content = readTxtFileToString(fileName);
@@ -46,15 +46,19 @@ public class FCM {
       int count = charCounts.merge(nextChar, 1, Integer::sum);
       final float logProb = getLogProb(alpha, charCounts, alphaTimesAlphabet, count);
       totalSum += logProb;
-      logProbabilities.add(logProb);
+      if (saveToCsv) {
+        logProbabilities.add(logProb);
+      }
     }
 
     final int totalNoOfPredictions = content.length() - k;
     final float entropy = -totalSum / totalNoOfPredictions / (float) Math.log(2);
     log.log(INFO, "Entropy: {0} bps", entropy);
-    saveToCSV(fileName.substring(fileName.lastIndexOf('/') + 1), alpha, k);
     printMemoryUsage();
-    appendToAllResultsCSV(fileName.substring(fileName.lastIndexOf('/') + 1), alpha, k, entropy);
+    if (saveToCsv) {
+      saveLogProbsToCsv(fileName.substring(fileName.lastIndexOf('/') + 1), alpha, k);
+      appendToAllResultsCSV(fileName.substring(fileName.lastIndexOf('/') + 1), alpha, k, entropy);
+    }
     if (verbose) {
       for (Map.Entry<String, Map<Character, Integer>> entry : contextAndSucceedingCharacterCounts.entrySet()) {
         log.info("Ctx: " + entry.getKey() + " -> " + entry.getValue());
@@ -68,7 +72,7 @@ public class FCM {
     log.log(INFO, "Used memory: {0} MB", usedMemory / (1024 * 1024));
   }
 
-  private void saveToCSV(String fileName, float alpha, int k) {
+  private void saveLogProbsToCsv(String fileName, float alpha, int k) {
     StringBuilder sb = new StringBuilder();
     sb.append("logProbabilities").append("\n");
     try (FileWriter f = new FileWriter("logProb_" + fileName + "_"
