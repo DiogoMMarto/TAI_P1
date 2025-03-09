@@ -21,20 +21,21 @@ def plot_results(data):
     a_values = sorted(set(a for k, a, result in data))
     
     # Prepare a matrix for plotting, with k_values as rows and a_values as columns
-    plot_matrix = [[None for _ in a_values] for _ in k_values]
+    plot_matrix = [[None for _ in k_values] for _ in a_values]
 
     for k, a, result in data:
         k_index = k_values.index(k)
         a_index = a_values.index(a)
-        plot_matrix[k_index][a_index] = result
+        plot_matrix[a_index][k_index] = result
 
     # Plotting each line of the matrix for different k values
     plt.figure(figsize=(10, 6))
-    for i, k in enumerate(k_values):
-        plt.plot(a_values, [plot_matrix[i][j] for j in range(len(a_values))], label=f'k={k}', marker='o')
+    for i, k in enumerate(a_values):
+        plt.plot(k_values, [plot_matrix[i][j] for j in range(len(k_values))], label=f'a={k}', marker='o')
 
-    plt.xlabel('a values')
-    plt.ylabel('Experiment Result')
+    plt.xlabel('K values')
+    plt.xticks([0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20])
+    plt.ylabel('Symbol Content')
     plt.title('Experiment Results for Varying k and a')
     plt.legend()
     plt.grid(True)

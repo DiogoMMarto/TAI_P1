@@ -1,69 +1,125 @@
 use clap::Parser;
 use fxhash::FxHashMap as HashMap;
+use std::collections::HashSet;
 use std::fs;
+use std::hash::{Hash, Hasher};
 use std::time::Instant;
 
-fn estimate_prob(text: &[u8], depth: usize, alphas: &[f64], alphabet_len: usize) -> Vec<f64> {
-    let ko = depth;
-    let mut table: HashMap<&[u8], i32> = HashMap::default();
-    // Build frequency table of all (depth+1)-length contexts
-    for i in 0..text.len().saturating_sub(ko) {
-        *table.entry(&text[i..i + ko + 1]).or_insert(0) += 1;
-    }
-    
-    let mut sums: HashMap<&[u8], i32> = HashMap::default();
-    for (context, &count) in &table {
-        *sums.entry(&context[..ko]).or_insert(0) += count;
-    }
-
-    // Calculate entropy components for each alpha
-    let mut probs = Vec::with_capacity(alphas.len());
-    for &alpha in alphas {
-        let mut sum = 0.0;
-        let const_val = alpha * alphabet_len as f64;
-        for (context, &count) in &table {
-            let s = *sums.get(&context[..ko]).unwrap() as f64;
-            let c = count as f64;
-            sum += c * ((c + alpha) / (s + const_val)).ln();
-        }
-
-        let n = (text.len().saturating_sub(ko)) as f64;
-        probs.push((-sum) / (n * 2.0f64.ln()));
-    }
-
-    probs
-}
-
 #[derive(Parser, Debug)]
-#[command(version, about)]
+#[command(author, version, about, long_about = None)]
 struct Args {
-    /// Input text file
     input: String,
 
-    /// Context depth
-    #[arg(short, long, default_value_t = 2)]
+    #[arg(short = 'k', long = "depth", default_value_t = 2)]
     depth: usize,
 
-    /// Smoothing factor (can be specified multiple times)
-    #[arg(short, long, value_parser = clap::value_parser!(f64))]
-    alpha: Vec<f64>,
+    #[arg(short = 'a', long = "alpha", default_value_t = 1.0)]
+    alpha: f64,
+
+    #[arg(short = 't', long = "timer")]
+    timer: bool,
 }
 
-fn main() {
-    let mut args = Args::parse();
+/// A context with a precomputed rolling hash and a slice of characters.
+/// We use the precomputed hash in the `Hash` implementation, while equality
+/// still compares the underlying slice to protect against collisions.
+struct RollingContext<'a> {
+    hash: u64,
+    data: &'a [char],
+}
 
-    let text = fs::read(&args.input).expect("Failed to read input file");
-    let alphabet_len = text.iter().collect::<std::collections::HashSet<_>>().len();
-    if args.alpha.is_empty() {
-        args.alpha.push(1.0);
+impl<'a> Hash for RollingContext<'a> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        // Use the precomputed hash value.
+        state.write_u64(self.hash);
+    }
+}
+
+impl<'a> PartialEq for RollingContext<'a> {
+    fn eq(&self, other: &Self) -> bool {
+        // Check both the hash and the actual slice for equality.
+        self.hash == other.hash && self.data == other.data
+    }
+}
+
+impl<'a> Eq for RollingContext<'a> {}
+
+fn main() {
+    let args = Args::parse();
+
+    let text = fs::read_to_string(&args.input).expect("Failed to read file");
+    let text_chars: Vec<char> = text.chars().collect();
+    let ko = args.depth;
+
+    if text_chars.len() <= ko {
+        eprintln!("Text length must be greater than depth k");
+        std::process::exit(1);
     }
 
-    let start = Instant::now();
-    let probabilities = estimate_prob(&text, args.depth, &args.alpha, alphabet_len);
-    let duration = start.elapsed();
+    // Build the alphabet from the text.
+    let alphabet: Vec<char> = text_chars
+        .iter()
+        .cloned()
+        .collect::<HashSet<_>>()
+        .into_iter()
+        .collect();
+    println!("Alphabet size: {}", alphabet.len());
+    println!("Alphabet: {:?}", alphabet);
 
-    println!("Execution time: {:?}", duration);
-    for (i, &alpha) in args.alpha.iter().enumerate() {
-        println!("Alpha: {:<10}, res: {:.4} bits", alpha, probabilities[i]);
+    let alpha_size = alphabet.len() as f64;
+    let const_term = args.alpha * alpha_size;
+
+    let start_time = Instant::now();
+    let mut sum = 0.0;
+    let mut table: HashMap<RollingContext, (HashMap<char, u32>, u32)> = HashMap::default();
+
+    // Define a base for our polynomial rolling hash.
+    let base: u64 = 257;
+    // Precompute the highest power: base^(ko-1)
+    let pow = base.pow((ko - 1) as u32);
+
+    // Compute initial hash for the first context window [0, ko).
+    let mut rolling_hash: u64 = 0;
+    for j in 0..ko {
+        rolling_hash = rolling_hash.wrapping_mul(base).wrapping_add(text_chars[j] as u64);
+    }
+
+    // Iterate over each context window.
+    for i in 0..(text_chars.len() - ko) {
+        let context_slice = &text_chars[i..i + ko];
+        let context = RollingContext {
+            hash: rolling_hash,
+            data: context_slice,
+        };
+        let next_char = text_chars[i + ko];
+
+        // Retrieve or create the table entry for this context.
+        let (context_table, total) = table
+            .entry(context)
+            .or_insert_with(|| (HashMap::default(), 0));
+
+        let count = context_table.entry(next_char).or_insert(0);
+        let numerator = *count as f64 + args.alpha;
+        let denominator = *total as f64 + const_term;
+        sum -= (numerator / denominator).ln();
+
+        *count += 1;
+        *total += 1;
+
+        // Update the rolling hash for the next window, if available.
+        if i < text_chars.len() - ko - 1 {
+            // Remove the contribution of the oldest character,
+            // then multiply by the base and add the new character.
+            rolling_hash = rolling_hash.wrapping_sub((text_chars[i] as u64).wrapping_mul(pow));
+            rolling_hash = rolling_hash.wrapping_mul(base);
+            rolling_hash = rolling_hash.wrapping_add(text_chars[i + ko] as u64);
+        }
+    }
+
+    let probability = (sum) / (text_chars.len() - ko) as f64 / 2.0f64.ln();
+    println!("Probability: {}", probability);
+
+    if args.timer {
+        println!("Elapsed time: {:?}", start_time.elapsed());
     }
 }

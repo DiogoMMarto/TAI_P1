@@ -18,9 +18,7 @@ def generate_data(input_file):
     """Generate experiment data by varying k and a values."""
     # Define parameter variations
     param_sets = [
-        {'k_values': [1, 2, 3, 4, 5], 'a_values': [0, 0.1, 0.5, 1]},
-        {'k_values': [1, 2, 3, 4, 5], 'a_values': [1, 10, 100, 1000, 10000]},
-        {'k_values': [1, 10, 100, 100], 'a_values': [0, 0.1, 0.5, 1]},
+        {'k_values': [i for i in range(1, 20)], 'a_values': [0.1, 0.5, 1]},
     ]
     
     results = []
@@ -45,19 +43,22 @@ def save_to_csv(filename, data):
 def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="Run the experiment with given input file.")
-    parser.add_argument("input_file", help="The input file to be used for the experiment")
+    # make it so that u can pass multiple files
+    # parser.add_argument("input_file", help="The input file to be used for the experiment")
+    parser.add_argument("input_file", nargs='+', help="The input file to be used for the experiment")
     args = parser.parse_args()
     
     # Generate data
-    data = generate_data(args.input_file)
+    for input_file in args.input_file:
+        data = generate_data(input_file)
     
-    # Derive output file name from input file name
-    base_name = os.path.splitext(os.path.basename(args.input_file))[0]
-    output_file = f"{base_name}_experiment_results.csv"
-    
-    # Save data to CSV
-    save_to_csv(output_file, data)
-    print(f"Data saved to {output_file}")
+        # Derive output file name from input file name
+        base_name = os.path.splitext(os.path.basename(input_file))[0]
+        output_file = f"{base_name}_experiment_results.csv"
+        
+        # Save data to CSV
+        save_to_csv(output_file, data)
+        print(f"Data saved to {output_file}")
 
 if __name__ == "__main__":
     main()

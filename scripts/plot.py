@@ -14,10 +14,10 @@ with open(file_path, "rb") as f:
 y = -1*y/np.log(2)
 
 # S = int(len(y)**(1/2))
-S = 1000
+S = 1
 print(S)
 y = np.convolve(y, np.ones(S)/S, mode='valid')
-
+print(y)
 plt.ylim(0,np.max(y)+0.5)
 plt.title(file_name)
 plt.xlabel("Index")
