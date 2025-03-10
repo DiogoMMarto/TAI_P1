@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +21,7 @@ import java.util.logging.Logger;
 public class FCM {
 
   private final Logger log = Logger.getLogger(getClass().getName());
-  private final Map<String, Map<Character, Integer>> contextAndSucceedingCharacterCounts = new LinkedHashMap<>();
+  private final Map<String, Map<Character, Integer>> contextAndSucceedingCharacterCounts = new HashMap<>();
   private final Set<Character> alphabet = new LinkedHashSet<>();
   private final List<Float> logProbabilities = new ArrayList<>();
   private String content;
@@ -41,7 +40,7 @@ public class FCM {
     for (int i = 0; i + k < content.length(); i++) {
       final String context = content.substring(i, i + k);
       final char nextChar = content.charAt(i + k);
-      contextAndSucceedingCharacterCounts.putIfAbsent(context, new HashMap<>());
+      contextAndSucceedingCharacterCounts.putIfAbsent(context, new HashMap<>(1, 1));
       Map<Character, Integer> charCounts = contextAndSucceedingCharacterCounts.get(context);
       int count = charCounts.merge(nextChar, 1, Integer::sum);
       final float logProb = getLogProb(alpha, charCounts, alphaTimesAlphabet, count);
