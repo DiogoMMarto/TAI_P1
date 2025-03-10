@@ -6,9 +6,9 @@ import static pt.ua.tai.utils.FileUtil.readTxtFileToString;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -23,7 +23,7 @@ public class FCM {
   private final Logger log = Logger.getLogger(getClass().getName());
   private final Map<String, Map<Character, Integer>> contextAndSucceedingCharacterCounts = new HashMap<>();
   private final Set<Character> alphabet = new LinkedHashSet<>();
-  private final List<Float> logProbabilities = new ArrayList<>();
+  private final List<Float> logProbabilities = new LinkedList<>();
   private String content;
 
   public void online(float alpha, int k, String fileName, boolean verbose, boolean saveToCsv) {
@@ -49,7 +49,6 @@ public class FCM {
         logProbabilities.add(logProb);
       }
     }
-
     final int totalNoOfPredictions = content.length() - k;
     final float entropy = -totalSum / totalNoOfPredictions / (float) Math.log(2);
     log.log(INFO, "Entropy: {0} bps", entropy);
