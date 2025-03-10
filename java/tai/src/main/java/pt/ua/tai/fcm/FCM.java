@@ -6,6 +6,7 @@ import static pt.ua.tai.utils.FileUtil.readTxtFileToString;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -37,22 +38,21 @@ public class FCM {
     log.info("Alphabet size: " + alphabet.size());
     double totalSum = 0.0F;
     final int contentLength = content.length();
-    StringBuilder contextBuilder = new StringBuilder(content.substring(0, k));
+    final char[] contentChars = content.toCharArray();
+    char[] contextWindow = Arrays.copyOf(contentChars, k);
     for (int i = 0; i + k < contentLength; i++) {
-      final String context = contextBuilder.toString();
-      final char nextChar = content.charAt(i + k);
+      final String context = String.valueOf(contextWindow);
+      final char nextChar = contentChars[i + k];
       CharCounts charCounts = contextAndSucceedingCharacterCounts.computeIfAbsent(
           context, key -> new CharCounts());
       int count = charCounts.increment(nextChar);
       float logProb = getLogProb(alpha, charCounts, alphaTimesAlphabet, count);
       totalSum += logProb;
-
-      if (i + k + 1 < contentLength) {
-        contextBuilder.deleteCharAt(0).append(content.charAt(i + k));
-      }
       if (saveToCsv) {
         logProbabilities.add(logProb);
       }
+      System.arraycopy(contextWindow, 1, contextWindow, 0, k - 1);
+      contextWindow[k - 1] = nextChar;
     }
     final int totalNoOfPredictions = content.length() - k;
     final double entropy = -totalSum / totalNoOfPredictions / Math.log(2);
