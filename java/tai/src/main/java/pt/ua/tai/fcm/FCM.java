@@ -36,7 +36,7 @@ public class FCM {
     generateAlphabetSet();
     final float alphaTimesAlphabet = alpha * alphabet.size();
     log.info("Alphabet size: " + alphabet.size());
-    float totalSum = 0.0F;
+    double totalSum = 0.0F;
     for (int i = 0; i + k < content.length(); i++) {
       final String context = content.substring(i, i + k);
       final char nextChar = content.charAt(i + k);
@@ -50,7 +50,7 @@ public class FCM {
       }
     }
     final int totalNoOfPredictions = content.length() - k;
-    final float entropy = -totalSum / totalNoOfPredictions / (float) Math.log(2);
+    final double entropy = -totalSum / totalNoOfPredictions / Math.log(2);
     log.log(INFO, "Entropy: {0} bps", entropy);
     printMemoryUsage();
     if (saveToCsv) {
@@ -85,7 +85,7 @@ public class FCM {
     }
   }
 
-  private void appendToAllResultsCSV(String fileName, float alpha, int k, float entropy) {
+  private void appendToAllResultsCSV(String fileName, float alpha, int k, double entropy) {
     StringBuilder sb = new StringBuilder();
     try (FileWriter f = new FileWriter("allResults.csv", true);
         PrintWriter writer = new PrintWriter(f)) {
