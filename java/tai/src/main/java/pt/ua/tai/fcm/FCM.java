@@ -21,13 +21,12 @@ import java.util.logging.Logger;
 public class FCM {
 
   private final Logger log = Logger.getLogger(getClass().getName());
-  private final Map<String, Map<Character, Integer>> contextAndSucceedingCharacterCounts = new HashMap<>();
+  private final Map<String, CharCounts> contextAndSucceedingCharacterCounts = new HashMap<>();
   private final Set<Character> alphabet = new LinkedHashSet<>();
   private final List<Float> logProbabilities = new LinkedList<>();
   private String content;
 
   public void online(float alpha, int k, String fileName, boolean verbose, boolean saveToCsv) {
-    content = null;
     try {
       content = readTxtFileToString(fileName);
     } catch (IOException e) {
@@ -37,14 +36,20 @@ public class FCM {
     final float alphaTimesAlphabet = alpha * alphabet.size();
     log.info("Alphabet size: " + alphabet.size());
     double totalSum = 0.0F;
-    for (int i = 0; i + k < content.length(); i++) {
-      final String context = content.substring(i, i + k);
+    final int contentLength = content.length();
+    StringBuilder contextBuilder = new StringBuilder(content.substring(0, k));
+    for (int i = 0; i + k < contentLength; i++) {
+      final String context = contextBuilder.toString();
       final char nextChar = content.charAt(i + k);
-      contextAndSucceedingCharacterCounts.putIfAbsent(context, new HashMap<>(1, 1));
-      Map<Character, Integer> charCounts = contextAndSucceedingCharacterCounts.get(context);
-      int count = charCounts.merge(nextChar, 1, Integer::sum);
-      final float logProb = getLogProb(alpha, charCounts, alphaTimesAlphabet, count);
+      CharCounts charCounts = contextAndSucceedingCharacterCounts.computeIfAbsent(
+          context, key -> new CharCounts());
+      int count = charCounts.increment(nextChar);
+      float logProb = getLogProb(alpha, charCounts, alphaTimesAlphabet, count);
       totalSum += logProb;
+
+      if (i + k + 1 < contentLength) {
+        contextBuilder.deleteCharAt(0).append(content.charAt(i + k));
+      }
       if (saveToCsv) {
         logProbabilities.add(logProb);
       }
@@ -58,10 +63,65 @@ public class FCM {
       appendToAllResultsCSV(fileName.substring(fileName.lastIndexOf('/') + 1), alpha, k, entropy);
     }
     if (verbose) {
-      for (Map.Entry<String, Map<Character, Integer>> entry : contextAndSucceedingCharacterCounts.entrySet()) {
+      for (Map.Entry<String, CharCounts> entry : contextAndSucceedingCharacterCounts.entrySet()) {
         log.info("Ctx: " + entry.getKey() + " -> " + entry.getValue());
       }
     }
+  }
+
+  private float getLogProb(float alpha, CharCounts charCounts, float alphaTimesAlphabet,
+      int count) {
+    final int contextTotalCount = charCounts.getTotalCount() - 1;
+    final float denominator = contextTotalCount + alphaTimesAlphabet;
+    final float probability = (count - 1 + alpha) / denominator;
+    return (float) Math.log(probability);
+  }
+
+  /**
+   * Creates the context and succeeding character and count Map
+   *
+   * @param k context width
+   */
+  private void generateContextAndSucceedingCharacterCounts(int k) {
+    final int contentLength = content.length();
+    StringBuilder contextBuilder = new StringBuilder(content.substring(0, k));
+    for (int i = 0; i + k < content.length(); i++) {
+      final String context = contextBuilder.toString();
+      final char nextChar = content.charAt(i + k);
+      CharCounts charCounts = contextAndSucceedingCharacterCounts.computeIfAbsent(
+          context, key -> new CharCounts());
+      charCounts.increment(nextChar);
+      if (i + k + 1 < contentLength) {
+        contextBuilder.deleteCharAt(0).append(content.charAt(i + k));
+      }
+    }
+  }
+
+  /**
+   * Generate an alphabet from the symbols used in the content
+   */
+  private void generateAlphabetSet() {
+    for (int i = 0; i < content.length(); i++) {
+      alphabet.add(content.charAt(i));
+    }
+  }
+
+  /**
+   * Compute the weighted sum of log probabilities for each (context, nextChar) pair: count *
+   * log((count + alpha) / (totalCount_for_context + alpha*alphabet.size()))
+   */
+  private float calculateWeightedLogSum(float alpha) {
+    float sumLogProb = 0.0F;
+    final float alphaTimesAlphabet = alpha * alphabet.size();
+    for (Map.Entry<String, CharCounts> entry : contextAndSucceedingCharacterCounts.entrySet()) {
+      CharCounts charCounts = entry.getValue();
+      for (var countsEntry : charCounts.getCounts().entrySet()) {
+        final int count = countsEntry.getValue();
+        final float probability = getLogProb(alpha, charCounts, alphaTimesAlphabet, count);
+        sumLogProb += count * (float) Math.log(probability);
+      }
+    }
+    return sumLogProb;
   }
 
   private void printMemoryUsage() {
@@ -95,62 +155,6 @@ public class FCM {
     } catch (IOException e) {
       log.log(Level.SEVERE, "Error writing to allResults.csv", e);
     }
-  }
-
-  /**
-   * Creates the context and succeeding character and count Map
-   *
-   * @param k context width
-   */
-  protected void generateContextAndSucceedingCharacterCounts(int k) {
-    for (int i = 0; i + k < content.length(); i++) {
-      final String context = content.substring(i, i + k);
-      final char nextChar = content.charAt(i + k);
-      contextAndSucceedingCharacterCounts.putIfAbsent(context, new HashMap<>());
-      Map<Character, Integer> charCounts = contextAndSucceedingCharacterCounts.get(context);
-      charCounts.merge(nextChar, 1, Integer::sum);
-    }
-  }
-
-  /**
-   * Generate an alphabet from the symbols used in the content
-   */
-  protected void generateAlphabetSet() {
-    for (int i = 0; i < content.length(); i++) {
-      alphabet.add(content.charAt(i));
-    }
-  }
-
-  /**
-   * Compute the weighted sum of log probabilities for each (context, nextChar) pair: count *
-   * log((count + alpha) / (totalCount_for_context + alpha*alphabet.size()))
-   */
-  protected float calculateWeightedLogSum(float alpha) {
-    float sumLogProb = 0.0F;
-    final float alphaTimesAlphabet = alpha * alphabet.size();
-    for (Map.Entry<String, Map<Character, Integer>> entry : contextAndSucceedingCharacterCounts.entrySet()) {
-      Map<Character, Integer> counts = entry.getValue();
-      for (var countsEntry : counts.entrySet()) {
-        final int count = countsEntry.getValue();
-        final float probability = getLogProb(alpha, counts, alphaTimesAlphabet, count);
-        sumLogProb += count * (float) Math.log(probability);
-      }
-    }
-    return sumLogProb;
-  }
-
-  private float getLogProb(float alpha, Map<Character, Integer> charCounts,
-      float alphaTimesAlphabet, int count) {
-    // Sum of counts for the context
-    final int contextTotalCount = charCounts.values().stream().reduce(0, Integer::sum) - 1;
-    // Denominator: observed count plus smoothing mass for every character
-    final float denominator = contextTotalCount + alphaTimesAlphabet;
-    final float probability = (count - 1 + alpha) / denominator;
-    return (float) Math.log(probability);
-  }
-
-  public void setContent(String content) {
-    this.content = content;
   }
 }
 
