@@ -35,7 +35,7 @@ def plot_results(data):
 
     plt.xlabel('K values')
     plt.xticks([0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20])
-    plt.ylabel('Symbol Content')
+    plt.ylabel('Entropy')
     plt.title('Experiment Results for Varying k and a')
     plt.legend()
     plt.grid(True)

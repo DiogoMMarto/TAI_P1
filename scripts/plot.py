@@ -20,8 +20,10 @@ if len(sys.argv) > 2:
     S = int(sys.argv[2])
 else:
     S = int(len(y)**(1/2))
-print(y)
 print(S)
+print(y)
+print(np.mean(y))
+
 y = np.convolve(y, np.ones(S)/S, mode='valid')
 plt.figure(figsize=(16,6))
 plt.ylim(0,np.max(y)+0.5)
