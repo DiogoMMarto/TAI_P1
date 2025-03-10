@@ -1,5 +1,5 @@
-sequences/*
-*fcm
-*fcm_debug
+# sequences/*
+# *fcm
+# *fcm_debug
 *bin
-*.exe
+# *.exe
