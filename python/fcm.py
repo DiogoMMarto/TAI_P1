@@ -36,8 +36,6 @@ def main():
         
     text = open_file(args.input)
     alphabet = set(text)
-    print(len(alphabet))
-    print(alphabet)
     t = time.time()
     probability = estimate_prob(text, args.depth, args.alpha, alphabet)
     print(probability)

@@ -6,7 +6,7 @@ import os
 
 def run_experiment(k, a, input_file):
     """Run the ./fcm command with given k and a values and capture the output."""
-    command = ["./fcm", input_file, "-k", str(k), "-a", str(a)]
+    command = ["./fcm.exe", input_file, "-k", str(k), "-a", str(a)]
     try:
         result = subprocess.run(command, capture_output=True, text=True, check=True)
         output = result.stdout.strip()

@@ -21,8 +21,7 @@ struct Args {
 }
 
 /// A context with a precomputed rolling hash and a slice of characters.
-/// We use the precomputed hash in the `Hash` implementation, while equality
-/// still compares the underlying slice to protect against collisions.
+/// We use the precomputed hash in the `Hash` implementation.
 struct RollingContext<'a> {
     hash: u64,
     data: &'a [char],
@@ -30,15 +29,13 @@ struct RollingContext<'a> {
 
 impl<'a> Hash for RollingContext<'a> {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        // Use the precomputed hash value.
         state.write_u64(self.hash);
     }
 }
 
 impl<'a> PartialEq for RollingContext<'a> {
     fn eq(&self, other: &Self) -> bool {
-        // Check both the hash and the actual slice for equality.
-        self.hash == other.hash && self.data == other.data
+        self.data == other.data
     }
 }
 
@@ -63,8 +60,6 @@ fn main() {
         .collect::<HashSet<_>>()
         .into_iter()
         .collect();
-    println!("Alphabet size: {}", alphabet.len());
-    println!("Alphabet: {:?}", alphabet);
 
     let alpha_size = alphabet.len() as f64;
     let const_term = args.alpha * alpha_size;
@@ -73,18 +68,14 @@ fn main() {
     let mut sum = 0.0;
     let mut table: HashMap<RollingContext, (HashMap<char, u32>, u32)> = HashMap::default();
 
-    // Define a base for our polynomial rolling hash.
     let base: u64 = 257;
-    // Precompute the highest power: base^(ko-1)
     let pow = base.pow((ko - 1) as u32);
 
-    // Compute initial hash for the first context window [0, ko).
     let mut rolling_hash: u64 = 0;
     for j in 0..ko {
         rolling_hash = rolling_hash.wrapping_mul(base).wrapping_add(text_chars[j] as u64);
     }
 
-    // Iterate over each context window.
     for i in 0..(text_chars.len() - ko) {
         let context_slice = &text_chars[i..i + ko];
         let context = RollingContext {
@@ -93,7 +84,6 @@ fn main() {
         };
         let next_char = text_chars[i + ko];
 
-        // Retrieve or create the table entry for this context.
         let (context_table, total) = table
             .entry(context)
             .or_insert_with(|| (HashMap::default(), 0));
@@ -106,7 +96,6 @@ fn main() {
         *count += 1;
         *total += 1;
 
-        // Update the rolling hash for the next window, if available.
         if i < text_chars.len() - ko - 1 {
             // Remove the contribution of the oldest character,
             // then multiply by the base and add the new character.
