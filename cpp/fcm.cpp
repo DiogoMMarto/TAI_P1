@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <unordered_map>
-#include <array>
+#include <unordered_map>
 #include <string_view>
 #include <string>
 #include <set>
@@ -63,28 +63,28 @@ int main(int argc, char* argv[]) {
     double sum = 0.0;
 
     // The outer table maps a context (as a string_view) to a pair:
-    //   - the frequency table (std::array<uint32_t, 256>),
+    //   - the frequency table (std::unordered_map<char, uint32_t>),
     //   - the total count observed for that context.
-    using FrequencyTable = std::array<uint32_t, 256>;
+    using FrequencyTable = std::unordered_map<char, uint32_t>;
     std::unordered_map<std::string_view, std::pair<FrequencyTable, uint32_t>> table;
     table.reserve(text.size() / args.depth); // heuristic reserve
 
-    // Note: since `text` remains alive throughout, the string_views remain valid.
+    // Note: since text remains alive throughout, the string_views remain valid.
     const size_t num_contexts = text.size() - args.depth;
     for (size_t i = 0; i < num_contexts; i++) {
         std::string_view context(text.data() + i, args.depth);
         char next_char = text[i + args.depth];
 
-        auto [iter, inserted] = table.try_emplace(context, FrequencyTable{}, 0);
+        auto [iter, inserted] = table.try_emplace(context, FrequencyTable(), 0);
         auto& freq_table = iter->second.first;
         auto& total = iter->second.second;
 
-        uint32_t count = freq_table[static_cast<unsigned char>(next_char)];
+        uint32_t count = freq_table[next_char];
         double numerator = static_cast<double>(count) + args.alpha;
         double denominator = static_cast<double>(total) + const_term;
         sum -= std::log(numerator / denominator);
 
-        freq_table[static_cast<unsigned char>(next_char)] = count + 1;
+        freq_table[next_char] = count + 1;
         total++;
     }
 

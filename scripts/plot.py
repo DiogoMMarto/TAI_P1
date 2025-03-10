@@ -16,15 +16,20 @@ if ext == "csv":
         y = np.loadtxt(f)
 y = -1*y/np.log(2)
 
-# S = int(len(y)**(1/2))
-S = 1
+if len(sys.argv) > 2:
+    S = int(sys.argv[2])
+else:
+    S = int(len(y)**(1/2))
 print(y)
 print(S)
 y = np.convolve(y, np.ones(S)/S, mode='valid')
+plt.figure(figsize=(16,6))
 plt.ylim(0,np.max(y)+0.5)
 plt.title(file_name)
 plt.xlabel("Index")
-plt.ylabel("Entropy")
+plt.ylabel("Information Content(bits/symbol)")
 plt.plot(y)
 plt.savefig(file_name + ".png")
+# plt.show()
+
 
