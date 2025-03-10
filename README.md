@@ -8,13 +8,15 @@ Each folder contains an implemention of the project in their respective language
 
 ## Table of features
 
-| Language | FCM | Generator |
-| -------- | --- | --------- |
-| c        | ✅ | ❌        |
-| cpp      | ✅ | ❌        |
-| rust     | ✅ | ❌        |
-| python   | ✅ | ✅        |
-| java     | ✅ | ✅        |
+| Language | FCM | Generator | Complexity over file |
+| -------- | --- | --------- | -------------------- |
+| c        | ✅ | ❌        | ✅                  |
+| cpp      | ✅ | ❌        | ❌                  |
+| rust     | ✅ | ❌        | ❌                  |
+| python   | ✅ | ⚠️        | ❌                  |
+| java     | ✅ | ✅        | ✅                  |
+
+⚠️ The generator in the python version was a slow implementation and doesnt have all features. Strongly reccomended to use Java version.
 
 ## Authors
 
