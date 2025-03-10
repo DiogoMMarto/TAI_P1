@@ -14,7 +14,7 @@ public class PredictorMax extends Predictor {
 
   @Override
   protected char chooseChar() {
-    entries = getEntries(context);
+    entries = contextSearcher.getEntries(context);
     int max = 0;
     char c = ' ';
     for (Map.Entry<Character, Integer> entry : entries.entrySet()) {

@@ -3,7 +3,7 @@ package pt.ua.tai.generator.Predictor;
 import java.util.Map;
 import pt.ua.tai.generator.Predictor.ContextSearcher.ContextSearcher;
 
-public abstract class Predictor {
+public abstract class Predictor{
 
   protected ContextSearcher contextSearcher;
   protected String response;
@@ -51,10 +51,6 @@ public abstract class Predictor {
       return ' ';
     }
     return chooseChar();
-  }
-
-  protected Map<Character, Integer> getEntries(String context) {
-    return table.get(context);
   }
 
 

@@ -8,8 +8,8 @@ import java.util.Set;
 public class Processor {
 
   protected Map<String, Map<Character, Integer>> countTable;
-  private int k;
-  private String content;
+  protected int k;
+  protected String content;
   private Set<Character> alphabet;
 
   public Processor(String content, int k) {

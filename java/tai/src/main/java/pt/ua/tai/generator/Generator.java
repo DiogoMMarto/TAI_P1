@@ -7,6 +7,7 @@ import java.io.IOException;
 import pt.ua.tai.generator.Enum.Mode;
 import pt.ua.tai.generator.Enum.Search;
 import pt.ua.tai.generator.Predictor.ContextSearcher.ContextSearcher;
+import pt.ua.tai.generator.Predictor.ContextSearcher.ContextSearcherPopSuffixAllK;
 import pt.ua.tai.generator.Predictor.ContextSearcher.ContextSearcherPopularSuffix;
 import pt.ua.tai.generator.Predictor.ContextSearcher.ContextSearcherRandom;
 import pt.ua.tai.generator.Predictor.Predictor;
@@ -14,7 +15,9 @@ import pt.ua.tai.generator.Predictor.PredictorMax;
 import pt.ua.tai.generator.Predictor.PredictorProb;
 import pt.ua.tai.generator.Predictor.PredictorProbAlpha;
 import pt.ua.tai.generator.Processor.Processor;
+import pt.ua.tai.generator.Processor.ProcessorAllK;
 import pt.ua.tai.generator.Processor.ProcessorProbAlpha;
+import pt.ua.tai.generator.Processor.ProcessorProbAlphaAllK;
 
 public class Generator {
 
@@ -61,11 +64,19 @@ public class Generator {
   }
 
   public void setMode(String mode) throws Exception {
-    this.mode = Mode.valueOf(mode);
+    try {
+      this.mode = Mode.valueOf(mode);
+    } catch (IllegalArgumentException e) {
+        throw new Exception(e);
+    }
   }
 
   public void setSearchMode(String searchMode) throws Exception {
-    this.searchMode = Search.valueOf(searchMode);
+    try {
+      this.searchMode = Search.valueOf(searchMode);
+    } catch (IllegalArgumentException e) {
+        throw new Exception(e);
+    }
   }
 
   public void seeding(int seed) {
@@ -93,13 +104,26 @@ public class Generator {
   private void initProcessor() {
     switch (mode) {
       case MAX:
-        processor = new Processor(content, k);
+        if (searchMode==Search.SMALLERKTABLES){
+          processor = new ProcessorAllK(content, k);
+        }else{
+          processor = new Processor(content, k);
+
+        }
         break;
       case PROBABILITY:
-        processor = new Processor(content, k);
+        if (searchMode==Search.SMALLERKTABLES){
+          processor = new ProcessorAllK(content, k);
+        }else {
+          processor = new Processor(content, k);
+        }
         break;
       case PROBABILITYALPHA:
-        processor = new ProcessorProbAlpha(content, k, alpha);
+        if (searchMode==Search.SMALLERKTABLES){
+          processor = new ProcessorProbAlphaAllK(content, k, alpha);
+        }else {
+          processor = new ProcessorProbAlpha(content, k, alpha);
+        }
         break;
     }
   }
@@ -116,6 +140,9 @@ public class Generator {
         break;
       case CUTFIRSTCHAR:
         contextSearcher = new ContextSearcherPopularSuffix(processor.getCountTable(), k);
+        break;
+      case SMALLERKTABLES:
+        contextSearcher = new ContextSearcherPopSuffixAllK(processor.getCountTable(),k,((ProcessorAllK) processor).getSubCountTables());
         break;
       default:
         contextSearcher = new ContextSearcherPopularSuffix(processor.getCountTable(), k);

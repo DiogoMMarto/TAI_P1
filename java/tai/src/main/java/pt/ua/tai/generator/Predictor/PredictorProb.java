@@ -25,7 +25,7 @@ public class PredictorProb extends Predictor {
 
   @Override
   protected char chooseChar() {
-    entries=getEntries(context);
+    entries=contextSearcher.getEntries(context);
     int sum = entries.values().stream().reduce(0, Integer::sum);
     int randomValue = random.nextInt(sum);
     int cumulativeSum = 0;

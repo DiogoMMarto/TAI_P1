@@ -54,6 +54,7 @@ public final class Main implements Callable<Integer> {
   @Override
   public Integer call() {
     if (type.equals("generator") || type.equals("g")) {
+      long startTime = System.nanoTime();
       //validate param generator specific
       if (prior == null) {
         throw new IllegalArgumentException("Prior (-p) required for generator");
@@ -70,6 +71,11 @@ public final class Main implements Callable<Integer> {
       } else {
         log.info(generator.generate());
       }
+      long endTime = System.nanoTime();
+      long duration = endTime - startTime; // Time in nanoseconds
+      System.out.println("Execution time in nanoseconds: " + duration);
+      System.out.println("Execution time in milliseconds: " + (duration / 1_000_000.0) + " ms");
+
     } else {
       FCM fcm = new FCM();
       //validate param fcm specific

@@ -42,4 +42,16 @@ public class ContextSearcherPopularSuffix extends ContextSearcher {
     }
     return context;
   }
+
+  @Override
+  public Map<Character, Integer> getEntries(String context) {
+    return countTable.get(context);
+  }
+
+  @Override
+  public Map<Character, Double> getProbEntries(String context, Map<String, Map<Character, Double>> probTable, List<Map<String, Map<Character, Double>>> subProbTables) {
+    return probTable.get(context);
+  }
+
+
 }

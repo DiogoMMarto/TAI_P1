@@ -1,5 +1,6 @@
 package pt.ua.tai.generator.Predictor.ContextSearcher;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -23,4 +24,16 @@ public class ContextSearcherRandom extends ContextSearcher {
     int n = random.nextInt(keys.length);
     return keys[n];
   }
+
+  @Override
+  public Map<Character, Integer> getEntries(String context) {
+    return countTable.get(context);
+  }
+
+  @Override
+  public Map<Character, Double> getProbEntries(String context, Map<String, Map<Character, Double>> probTable, List<Map<String, Map<Character, Double>>> subProbTables) {
+    return Map.of();
+  }
+
+
 }
