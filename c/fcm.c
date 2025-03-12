@@ -12,7 +12,8 @@
 #define INITIAL_CAPACITY 2048
 #define INITIAL_CAPACITY_ARRAY 8
 #define LOAD_FACTOR 0.6
-#define LOAD_FACTOR_2 0.6
+#define LOAD_FACTOR_2 0.8
+#define GROWTH_FACTOR 2
 
 typedef struct {
     char* input;
@@ -34,7 +35,7 @@ Args default_args() {
 typedef struct {
     char c;
     uint32_t count;
-} CharInt;
+} CharInt; // MOVE THIS TO 2 ARRAYS TO IMPROVE THE MEMORY LAYOUT
 
 typedef struct {
     char* key;
@@ -74,6 +75,9 @@ HashTable* hashtable_create(uint32_t context_length) {
     return table;
 }
 
+
+// With better logic maybe we can do this 
+#if 0
 uint64_t strcmpDepth(const char* a, const char* b, uint32_t depth) {
     uint32_t i = 0;
     const uint64_t* a64 = (uint64_t*)a;
@@ -81,14 +85,27 @@ uint64_t strcmpDepth(const char* a, const char* b, uint32_t depth) {
     for(;i + sizeof(uint64_t) <= depth; i+=sizeof(uint64_t), a64++, b64++){
         if(*a64 != *b64) return 1;
     };
-    uint64_t mask = -1ull >> 8*(8 - depth % 8)*(i >= (depth-depth%8));
+    int shift_amt = 8*(8 - depth % 8)*(i >= (depth-depth%8));
+    if(shift_amt == 64) return 0;
+    uint64_t mask = -1ull >> shift_amt;
     return (*a64 & mask ) - (*b64 & mask);
 }
+#else
+uint64_t strcmpDepth(const char* a, const char* b, uint32_t depth) {
+    uint32_t i = 0;
+    const uint64_t* a64 = (uint64_t*)a;
+    const uint64_t* b64 = (uint64_t*)b;
+    for(;i + sizeof(uint64_t) <= depth; i+=sizeof(uint64_t), a64++, b64++){
+        if(*a64 != *b64) return 1;
+    };
+    return 0;
+}
+#endif
 
 uint32_t probe(HashTable* table,  uint32_t h , char* key) {
     uint64_t index = h % table->capacity;
     uint32_t i = 1;
-    while (table->entries[index].key && strcmpDepth(table->entries[index].key, key,table->context_length) != 0) {
+    while (table->entries[index].key && table->entries[index].hash != h && strcmpDepth(table->entries[index].key, key,table->context_length) != 0) {
         index = (index + i) % table->capacity;
         i++;
     }   
@@ -105,7 +122,7 @@ uint32_t probe2(HashEntry* e , char c) {
 }
 
 void da_resize(HashEntry* e) {
-    uint32_t new_capacity = 1 + e->capacity * 2;
+    uint32_t new_capacity = e->capacity * GROWTH_FACTOR;
     CharInt* new_entries = calloc(new_capacity, sizeof(CharInt));
     for (uint32_t i = 0; i < e->capacity; i++) {
         CharInt* entry = &e->entries[i];
@@ -132,8 +149,9 @@ uint32_t da_insert(HashEntry* e , char c , uint32_t count) {
         e->entries[index].c = c;
         e->size++;
     };
+    uint32_t old_count = e->entries[index].count;
     e->entries[index].count += count;
-    return e->entries[index].count;
+    return old_count;
 }
 
 uint32_t da_get(HashEntry* e , char c) {
@@ -142,14 +160,14 @@ uint32_t da_get(HashEntry* e , char c) {
 }
 
 void hashtable_resize(HashTable* table) {
-    uint32_t new_capacity = table->capacity * 2;
+    uint32_t new_capacity = table->capacity * GROWTH_FACTOR;
     HashEntry* new_entries = calloc(new_capacity, sizeof(HashEntry));
     for (uint32_t i = 0; i < table->capacity; i++) {
         HashEntry* entry = &table->entries[i];
         if (entry->key != NULL) {
             uint64_t index = entry->hash % new_capacity;
             uint32_t j = 1;
-            while (new_entries[index].key && strcmpDepth(new_entries[index].key, entry->key,table->context_length) != 0) {
+            while (new_entries[index].key && new_entries[index].hash != entry->hash && strcmpDepth(new_entries[index].key, entry->key,table->context_length) != 0) {
                 index = (index + j) % new_capacity;
                 j++;
             }
@@ -173,12 +191,11 @@ void hashtable_increment(HashTable* table, char* key, uint32_t* count,uint32_t* 
         entry->key = key;
         entry->hash = h;
         entry->size = 0;
-        entry->capacity = 0;
+        entry->capacity = INITIAL_CAPACITY_ARRAY;
         entry->total = 0;
-        entry->entries = malloc(INITIAL_CAPACITY*sizeof(CharInt));
+        entry->entries = calloc(INITIAL_CAPACITY_ARRAY,sizeof(CharInt));
     } 
-    entry->total++;
-    *total = entry->total;
+    *total = entry->total++;
     *count = da_insert(entry, key[table->context_length], 1);
 }
 
@@ -194,9 +211,9 @@ void hashtable_increment_by(HashTable* table, char* key, uint32_t value, uint32_
         entry->key = key;
         entry->hash = h;
         entry->size = 0;
-        entry->capacity = 0;
+        entry->capacity = INITIAL_CAPACITY_ARRAY;
         entry->total = 0;
-        entry->entries = malloc(INITIAL_CAPACITY*sizeof(CharInt));
+        entry->entries = calloc(INITIAL_CAPACITY_ARRAY,sizeof(CharInt));
     }
     entry->total += value;
     *total = entry->total;
@@ -290,9 +307,7 @@ uint32_t alphabet_size(char* text, uint32_t size) {
     uint8_t arr[32] = {0};
     uint32_t siz = 0;
     for (uint32_t i = 0; i < size-1; i++) {
-        if (text[i] == '\0') {
-            break;
-        }
+
         uint8_t index = ( (uint8_t) text[i] ) >> 3;
         uint8_t mask = 1 << ((uint8_t) text[i] & 7);
         uint8_t val = arr[index] & mask;
@@ -319,16 +334,16 @@ double estimate_prob(char* text, uint32_t size, int ko, double alpha, uint32_t a
     }
     double const_term = alpha * alphabet_size;
     uint32_t context_length = ko;
-    uint32_t max_i = size - context_length;
+    uint32_t max_i = size - context_length ;
 
     HashTable* table = hashtable_create(context_length);
     double sum_total = 0;
     for (uint32_t i = 0; i < max_i; i++) {
+        uint32_t total = 0;
+        uint32_t count = 0;
         char* context = text + i;
-        uint32_t total;
-        uint32_t count;
         hashtable_increment(table, context, &count, &total);
-        double symbol_length = log(((double) count+alpha) / ((double)total+const_term));
+        double symbol_length = log(( count+alpha) / (total+const_term));
         sum_total += symbol_length;
         if (output_path != NULL) {
             fwrite(&symbol_length, sizeof(double), 1, output_file);
@@ -343,10 +358,9 @@ int main(int argc, char* argv[]) {
     Args args = parse_args(argc, argv);
 
     uint32_t size = 0;
+    clock_t t = clock();
     char* text = read_file(args.input, &size);
     uint32_t alphabet_siz = alphabet_size(text, size);
-    
-    clock_t t = clock();
     double prob = estimate_prob(text, size, args.depth, args.alpha, alphabet_siz,args.output);
     t = clock() - t;
 
