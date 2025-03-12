@@ -46,3 +46,7 @@ Runs the FCM or Generator algorithm with the given parameters.
 - Extensive calls:
   `java -jar target/tai-1.0-SNAPSHOT.jar g -f sequence1.txt -rl 500 -p "ATGAATGAAT" -pf -k 5 -s 85095 -m PROBABILITYALPHA -a 0.01 -nc`
   `java -jar target/tai-1.0-SNAPSHOT.jar g -f sequence1.txt -rl 500 -p "ATGAATGAAT" -pf -k 5 -s 85095 -m MAX -sm RANDOM -nc`
+
+### Warning
+
+May not work with raw bytes
