@@ -307,9 +307,7 @@ uint32_t alphabet_size(char* text, uint32_t size) {
     uint8_t arr[32] = {0};
     uint32_t siz = 0;
     for (uint32_t i = 0; i < size-1; i++) {
-        if (text[i] == '\0') {
-            break;
-        }
+
         uint8_t index = ( (uint8_t) text[i] ) >> 3;
         uint8_t mask = 1 << ((uint8_t) text[i] & 7);
         uint8_t val = arr[index] & mask;
@@ -360,10 +358,9 @@ int main(int argc, char* argv[]) {
     Args args = parse_args(argc, argv);
 
     uint32_t size = 0;
+    clock_t t = clock();
     char* text = read_file(args.input, &size);
     uint32_t alphabet_siz = alphabet_size(text, size);
-    
-    clock_t t = clock();
     double prob = estimate_prob(text, size, args.depth, args.alpha, alphabet_siz,args.output);
     t = clock() - t;
 

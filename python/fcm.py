@@ -3,7 +3,7 @@ import time
 from math import log
 
 def open_file(file_path: str)-> str:
-    with open(file_path,"r",encoding="utf-8") as f:
+    with open(file_path,"rb") as f:
         return f.read()
 
 def estimate_prob(text: str,ko: int, alpha: float, alphabet: set[str])-> dict[str,int]:

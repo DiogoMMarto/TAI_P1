@@ -20,11 +20,11 @@ struct Args {
     timer: bool,
 }
 
-/// A context with a precomputed rolling hash and a slice of characters.
+/// A context with a precomputed rolling hash and a slice of bytes.
 /// We use the precomputed hash in the `Hash` implementation.
 struct RollingContext<'a> {
     hash: u64,
-    data: &'a [char],
+    data: &'a [u8],
 }
 
 impl<'a> Hash for RollingContext<'a> {
@@ -44,17 +44,15 @@ impl<'a> Eq for RollingContext<'a> {}
 fn main() {
     let args = Args::parse();
 
-    let text = fs::read_to_string(&args.input).expect("Failed to read file");
-    let text_chars: Vec<char> = text.chars().collect();
+    let text_bytes = fs::read(&args.input).expect("Failed to read file");
     let ko = args.depth;
 
-    if text_chars.len() <= ko {
+    if text_bytes.len() <= ko {
         eprintln!("Text length must be greater than depth k");
         std::process::exit(1);
     }
 
-    // Build the alphabet from the text.
-    let alphabet: Vec<char> = text_chars
+    let alphabet: Vec<u8> = text_bytes
         .iter()
         .cloned()
         .collect::<HashSet<_>>()
@@ -66,23 +64,25 @@ fn main() {
 
     let start_time = Instant::now();
     let mut sum = 0.0;
-    let mut table: HashMap<RollingContext, (HashMap<char, u32>, u32)> = HashMap::default();
+    let mut table: HashMap<RollingContext, (HashMap<u8, u32>, u32)> = HashMap::default();
 
     let base: u64 = 257;
     let pow = base.pow((ko - 1) as u32);
 
     let mut rolling_hash: u64 = 0;
     for j in 0..ko {
-        rolling_hash = rolling_hash.wrapping_mul(base).wrapping_add(text_chars[j] as u64);
+        rolling_hash = rolling_hash
+            .wrapping_mul(base)
+            .wrapping_add(text_bytes[j] as u64);
     }
 
-    for i in 0..(text_chars.len() - ko) {
-        let context_slice = &text_chars[i..i + ko];
+    for i in 0..(text_bytes.len() - ko) {
+        let context_slice = &text_bytes[i..i + ko];
         let context = RollingContext {
             hash: rolling_hash,
             data: context_slice,
         };
-        let next_char = text_chars[i + ko];
+        let next_char = text_bytes[i + ko];
 
         let (context_table, total) = table
             .entry(context)
@@ -96,16 +96,16 @@ fn main() {
         *count += 1;
         *total += 1;
 
-        if i < text_chars.len() - ko - 1 {
-            // Remove the contribution of the oldest character,
-            // then multiply by the base and add the new character.
-            rolling_hash = rolling_hash.wrapping_sub((text_chars[i] as u64).wrapping_mul(pow));
+        if i < text_bytes.len() - ko - 1 {
+            // Update rolling hash
+            rolling_hash = rolling_hash
+                .wrapping_sub((text_bytes[i] as u64).wrapping_mul(pow));
             rolling_hash = rolling_hash.wrapping_mul(base);
-            rolling_hash = rolling_hash.wrapping_add(text_chars[i + ko] as u64);
+            rolling_hash = rolling_hash.wrapping_add(text_bytes[i + ko] as u64);
         }
     }
 
-    let probability = (sum) / (text_chars.len() - ko) as f64 / 2.0f64.ln();
+    let probability = sum / (text_bytes.len() - ko) as f64 / 2.0f64.ln();
     println!("Probability: {}", probability);
 
     if args.timer {
