@@ -4,6 +4,8 @@
 
 `mvn package`
 
+Requires to have [maven](https://maven.apache.org/install.html) installed.
+
 ## Program arguments
 
 Usage: Main [-hvV] [-nc] [-pf] [-a=<alpha>] -f=<fileName> [-k=<k>] [-m=<mode>]
