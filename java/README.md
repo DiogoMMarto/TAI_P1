@@ -24,18 +24,22 @@ Runs the FCM or Generator algorithm with the given parameters.
 -rl, --responseLength=<responseLength> Length of the response for generator \
 -s, --seeding=<seed>     Seed value for random number generation \
 -sm, --searchMode=<searchMode> Search mode (e.g., CUTFIRSTCHAR, RANDOM) \
+-sc, --saveCsv Save online probabilities and results to CSV
 -v, --verbose Verbose output \
 -V, --version Print version information and exit. \
 
 ## Example arguments
 
-### FMC examples
+### FCM examples
 
 - External file:
   `java -jar target/tai-1.0-SNAPSHOT.jar fcm -a 1 -k 1 -f /Users/ilker/Courses/TAI/TAI_P1/sequence1.txt`
 
 - Enable verbose output:
   `java -jar target/tai-1.0-SNAPSHOT.jar -a 1 -k 1 -f sequence1.txt -v`
+
+- Save results to CSV:
+  `java -jar target/tai-1.0-SNAPSHOT.jar -a 1 -k 1 -f sequence1.txt -sc`
 
 ### Generator examples
 
