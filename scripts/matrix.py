@@ -18,7 +18,7 @@ def generate_data(input_file):
     """Generate experiment data by varying k and a values."""
     # Define parameter variations
     param_sets = [
-        {'k_values': [i for i in range(1, 20)], 'a_values': [0.1, 0.5, 1]},
+        {'k_values': [i for i in range(1, 16)], 'a_values': [0.001,0.01, 0.1, 1]},
     ]
     
     results = []

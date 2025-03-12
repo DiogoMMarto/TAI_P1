@@ -75,6 +75,9 @@ HashTable* hashtable_create(uint32_t context_length) {
     return table;
 }
 
+
+// With better logic maybe we can do this 
+#if 0
 uint64_t strcmpDepth(const char* a, const char* b, uint32_t depth) {
     uint32_t i = 0;
     const uint64_t* a64 = (uint64_t*)a;
@@ -82,14 +85,27 @@ uint64_t strcmpDepth(const char* a, const char* b, uint32_t depth) {
     for(;i + sizeof(uint64_t) <= depth; i+=sizeof(uint64_t), a64++, b64++){
         if(*a64 != *b64) return 1;
     };
-    uint64_t mask = -1ull >> 8*(8 - depth % 8)*(i >= (depth-depth%8));
+    int shift_amt = 8*(8 - depth % 8)*(i >= (depth-depth%8));
+    if(shift_amt == 64) return 0;
+    uint64_t mask = -1ull >> shift_amt;
     return (*a64 & mask ) - (*b64 & mask);
 }
+#else
+uint64_t strcmpDepth(const char* a, const char* b, uint32_t depth) {
+    uint32_t i = 0;
+    const uint64_t* a64 = (uint64_t*)a;
+    const uint64_t* b64 = (uint64_t*)b;
+    for(;i + sizeof(uint64_t) <= depth; i+=sizeof(uint64_t), a64++, b64++){
+        if(*a64 != *b64) return 1;
+    };
+    return 0;
+}
+#endif
 
 uint32_t probe(HashTable* table,  uint32_t h , char* key) {
     uint64_t index = h % table->capacity;
     uint32_t i = 1;
-    while (table->entries[index].key && strcmpDepth(table->entries[index].key, key,table->context_length) != 0) {
+    while (table->entries[index].key && table->entries[index].hash != h && strcmpDepth(table->entries[index].key, key,table->context_length) != 0) {
         index = (index + i) % table->capacity;
         i++;
     }   
@@ -151,7 +167,7 @@ void hashtable_resize(HashTable* table) {
         if (entry->key != NULL) {
             uint64_t index = entry->hash % new_capacity;
             uint32_t j = 1;
-            while (new_entries[index].key && strcmpDepth(new_entries[index].key, entry->key,table->context_length) != 0) {
+            while (new_entries[index].key && new_entries[index].hash != entry->hash && strcmpDepth(new_entries[index].key, entry->key,table->context_length) != 0) {
                 index = (index + j) % new_capacity;
                 j++;
             }
